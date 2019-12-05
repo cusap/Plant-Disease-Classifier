@@ -9,7 +9,8 @@ from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
 
 PERCENT_TRAIN = .8
 lamb = .0001
-segmented_path = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj\PlantVillage-Dataset\raw\segmented\*"
+path_to_parent = r"/home/dhvanil/plant_disease_classifier/"
+segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented/*"
 learning_rate = .045
 lr_decay = .98
 batch_size = 96
@@ -34,7 +35,7 @@ def open_data():
     for i,label_name in enumerate(glob.glob(segmented_path)):
         label = label_name.split('\\')[-1]
         label_names.append(label)
-        for pic_name in glob.glob(label_name + "\*"):
+        for pic_name in glob.glob(label_name + "/*"):
             im = Image.open(pic_name)
             im.load()
             image_list.append(np.asarray(im, dtype='int32'))
@@ -96,12 +97,10 @@ if __name__ == '__main__':
     x = Conv2D(32, 3,strides= 2,padding='same', kernel_regularizer=tf.keras.regularizers.l2(lamb),
                activity_regularizer=tf.keras.regularizers.l2(lamb))(input)
 
-    print(input.get_shape)
     x = b_block(x, num_channels = 16, exp_fac=1, n=1, s=1)
     x = b_block(x, num_channels = 24, exp_fac=6, n=2, s=2)
     x = b_block(x, num_channels = 32, exp_fac=6, n=3, s=2)
     x = b_block(x, num_channels = 64, exp_fac=6, n=4, s=2)
-    #print(x.get_shape)
     '''
     x = b_block(x, num_channels = 96, exp_fac=6, n=3, s=1)
     x = b_block(x, num_channels = 160, exp_fac=6, n=3, s=2)
@@ -118,7 +117,7 @@ if __name__ == '__main__':
 
 
     #save model checkpoints
-    cp_path = "/home/jovyan/work/aug_model/new_model-{epoch:04d}.ckpt"
+    cp_path = path_to_parent + r"Plant-Disease-Classifier/model_checkpoints/{epoch:04d}.cpkt"
     cp_dir = os.path.dirname(cp_path)
     cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=10,
                                       verbose=1)

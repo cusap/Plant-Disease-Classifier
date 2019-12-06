@@ -95,61 +95,64 @@ def scheduler(epoch):
 if __name__ == '__main__':
     train_im, train_labels, val_im, val_labels, label_names = get_data()
     print(label_names)
-    input = tf.keras.Input(shape=(train_im.shape[1:]))
-    x = Conv2D(32, 3,strides= 2,padding='same', kernel_regularizer=tf.keras.regularizers.l2(lamb),
-               activity_regularizer=tf.keras.regularizers.l2(lamb))(input)
+    try:
+        with tf.device('/device:GPU:1'):
+            input = tf.keras.Input(shape=(train_im.shape[1:]))
+            x = Conv2D(32, 3,strides= 2,padding='same', kernel_regularizer=tf.keras.regularizers.l2(lamb),
+                       activity_regularizer=tf.keras.regularizers.l2(lamb))(input)
 
-    x = b_block(x, num_channels = 16, exp_fac=1, n=1, s=1)
-    x = b_block(x, num_channels = 24, exp_fac=6, n=2, s=2)
-    x = b_block(x, num_channels = 32, exp_fac=6, n=3, s=2)
-    x = b_block(x, num_channels = 64, exp_fac=6, n=4, s=2)
-    '''
-    x = b_block(x, num_channels = 96, exp_fac=6, n=3, s=1)
-    x = b_block(x, num_channels = 160, exp_fac=6, n=3, s=2)
-    x = b_block(x, num_channels = 320, exp_fac=6, n=1, s=1)
-    '''
-    x = Conv2D(1280, 1, strides=1, padding='same', kernel_regularizer=tf.keras.regularizers.l2(lamb),
-               activity_regularizer=tf.keras.regularizers.l2(lamb))(x)
-    x = GlobalAveragePooling2D()(x)
-    x = Reshape((1,1,1280))(x)
-    x = Conv2D(len(label_names),1, padding='same')(x)
-    x = Activation('softmax')(x)
-    output = Reshape((len(label_names),))(x)
-    model = tf.keras.Model(inputs=input, outputs=output)
-
-
-    #save model checkpoints
-    cp_path = path_to_parent + r"Plant-Disease-Classifier/model_checkpoints/{epoch:04d}.cpkt"
-    cp_dir = os.path.dirname(cp_path)
-    cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=10,
-                                      verbose=1)
-    im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=360,
-                                                             zoom_range=[0.5, 1.0],
-                                                             width_shift_range=0.4,
-                                                             height_shift_range=0.4,
-                                                             horizontal_flip=True,
-                                                             vertical_flip=True,
-                                                             data_format="channels_last",
-                                                             zca_whitening=True,
-                                                             brightness_range = [.2, 1.0],
-                                                             shear_range = 45,
-                                                             )
-
-    im_gen.fit(train_im)
-    lr_scheduler = LearningRateScheduler(scheduler, verbose=1)
+            x = b_block(x, num_channels = 16, exp_fac=1, n=1, s=1)
+            x = b_block(x, num_channels = 24, exp_fac=6, n=2, s=2)
+            x = b_block(x, num_channels = 32, exp_fac=6, n=3, s=2)
+            x = b_block(x, num_channels = 64, exp_fac=6, n=4, s=2)
+            '''
+            x = b_block(x, num_channels = 96, exp_fac=6, n=3, s=1)
+            x = b_block(x, num_channels = 160, exp_fac=6, n=3, s=2)
+            x = b_block(x, num_channels = 320, exp_fac=6, n=1, s=1)
+            '''
+            x = Conv2D(1280, 1, strides=1, padding='same', kernel_regularizer=tf.keras.regularizers.l2(lamb),
+                       activity_regularizer=tf.keras.regularizers.l2(lamb))(x)
+            x = GlobalAveragePooling2D()(x)
+            x = Reshape((1,1,1280))(x)
+            x = Conv2D(len(label_names),1, padding='same')(x)
+            x = Activation('softmax')(x)
+            output = Reshape((len(label_names),))(x)
+            model = tf.keras.Model(inputs=input, outputs=output)
 
 
-    opt = tf.compat.v1.train.RMSPropOptimizer(learning_rate, decay=.9, momentum=.9)
+            #save model checkpoints
+            cp_path = path_to_parent + r"Plant-Disease-Classifier/model_checkpoints/{epoch:04d}.cpkt"
+            cp_dir = os.path.dirname(cp_path)
+            cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=10,
+                                              verbose=1)
+            im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=360,
+                                                                     zoom_range=[0.5, 1.0],
+                                                                     width_shift_range=0.4,
+                                                                     height_shift_range=0.4,
+                                                                     horizontal_flip=True,
+                                                                     vertical_flip=True,
+                                                                     data_format="channels_last",
+                                                                     zca_whitening=True,
+                                                                     brightness_range = [.2, 1.0],
+                                                                     shear_range = 45,
+                                                                     )
 
-    model.compile(loss=tf.keras.losses.categorical_crossentropy,
-                  optimizer=tf.keras.optimizers.RMSprop(),
-                  metrics=['accuracy'])
-    model.summary()
+            im_gen.fit(train_im)
+            lr_scheduler = LearningRateScheduler(scheduler, verbose=1)
 
 
-    model_log = model.fit_generator(im_gen.flow(train_im, train_labels, batch_size=batch_size),
-                                    steps_per_epoch=train_im.shape[0] // batch_size, epochs=epochs,
-                                    callbacks=[lr_scheduler, cp_callback],
-                                    validation_data=(val_im, val_labels), verbose=2)
+            opt = tf.compat.v1.train.RMSPropOptimizer(learning_rate, decay=.9, momentum=.9)
 
+            model.compile(loss=tf.keras.losses.categorical_crossentropy,
+                          optimizer=tf.keras.optimizers.RMSprop(),
+                          metrics=['accuracy'])
+            model.summary()
+
+
+            model_log = model.fit_generator(im_gen.flow(train_im, train_labels, batch_size=batch_size),
+                                            steps_per_epoch=train_im.shape[0] // batch_size, epochs=epochs,
+                                            callbacks=[lr_scheduler, cp_callback],
+                                            validation_data=(val_im, val_labels), verbose=2)
+    except RuntimeError as e:
+        print(e)
 

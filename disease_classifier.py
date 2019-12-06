@@ -33,7 +33,7 @@ def open_data():
     label_list =[]
     label_names = []
     for i,label_name in enumerate(glob.glob(segmented_path)):
-        label = label_name.split('\\')[-1]
+        label = label_name.split('/')[-1]
         label_names.append(label)
         for pic_name in glob.glob(label_name + "/*"):
             im = Image.open(pic_name)
@@ -66,9 +66,11 @@ def bottleneck_s1(orig, num_channels, exp_fac, resid=True):
 def bottleneck_s2(x, num_channels, exp_fac):
     x = Conv2D(x.get_shape()[-1]*exp_fac, kernel_size=(1, 1), strides=1, padding='same', kernel_regularizer=tf.keras.regularizers.l2(lamb),
                activity_regularizer=tf.keras.regularizers.l2(lamb))(x)
+    x = BatchNormalization()(x)
     x = ReLU(max_value=6)(x)
     x = DepthwiseConv2D(3, padding='same', strides= 2, kernel_regularizer=tf.keras.regularizers.l2(lamb),
                         activity_regularizer=tf.keras.regularizers.l2(lamb))(x)
+    x = BatchNormalization()(x)
     x = ReLU(max_value=6)(x)
     x = Conv2D(num_channels, kernel_size=(1, 1), strides= 1, padding='same', kernel_regularizer=tf.keras.regularizers.l2(lamb),
                activity_regularizer=tf.keras.regularizers.l2(lamb), activation='linear')(x)
@@ -92,7 +94,7 @@ def scheduler(epoch):
 
 if __name__ == '__main__':
     train_im, train_labels, val_im, val_labels, label_names = get_data()
-
+    print(label_names)
     input = tf.keras.Input(shape=(train_im.shape[1:]))
     x = Conv2D(32, 3,strides= 2,padding='same', kernel_regularizer=tf.keras.regularizers.l2(lamb),
                activity_regularizer=tf.keras.regularizers.l2(lamb))(input)
@@ -121,14 +123,18 @@ if __name__ == '__main__':
     cp_dir = os.path.dirname(cp_path)
     cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=10,
                                       verbose=1)
-    im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=10,
-                                                             zoom_range=0.05,
-                                                             width_shift_range=0.07,
-                                                             height_shift_range=0.07,
+    im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=360,
+                                                             zoom_range=[0.5, 1.0],
+                                                             width_shift_range=0.4,
+                                                             height_shift_range=0.4,
                                                              horizontal_flip=True,
                                                              vertical_flip=True,
                                                              data_format="channels_last",
-                                                             zca_whitening=True)
+                                                             zca_whitening=True,
+                                                             brightness_range = [.2, 1.0],
+                                                             shear_range = 45,
+                                                             )
+
     im_gen.fit(train_im)
     lr_scheduler = LearningRateScheduler(scheduler, verbose=1)
 

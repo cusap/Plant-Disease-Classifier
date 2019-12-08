@@ -7,13 +7,14 @@ from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D,
     DepthwiseConv2D, ReLU, Reshape
 from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
 
+
 PERCENT_TRAIN = .8
-lamb = .0001
-path_to_parent = r"/home/dhvanil/plant_disease_classifier/"
-segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented/*"
+lamb = .000001
+path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
+segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\segmented\Apple*"
 learning_rate = .045
 lr_decay = .98
-batch_size = 96
+batch_size = 32
 epochs = 200
 
 def shuffle(data_im, data_labels):
@@ -33,12 +34,13 @@ def open_data():
     label_list =[]
     label_names = []
     for i,label_name in enumerate(glob.glob(segmented_path)):
-        label = label_name.split('/')[-1]
+        label = label_name.split('\\')[-1]
+        print(label)
         label_names.append(label)
-        for pic_name in glob.glob(label_name + "/*"):
+        for pic_name in glob.glob(label_name + "\\*"):
             im = Image.open(pic_name)
             im.load()
-            image_list.append(np.asarray(im, dtype='int32'))
+            image_list.append(np.asarray(im, dtype='float32'))
             label_list.append(i)
     return np.asarray(image_list), np.asarray(label_list), label_names
 
@@ -47,6 +49,7 @@ def get_data():
     image_list, label_list = format_data(image_list, label_list, len(label_names))
     image_list, label_list = shuffle(image_list, label_list)
     border = int(len(image_list)*PERCENT_TRAIN)
+    print(len(image_list))
     return image_list[0:border], label_list[0:border], image_list[border+1:], label_list[border+1:], label_names
 
 def bottleneck_s1(orig, num_channels, exp_fac, resid=True):
@@ -95,8 +98,9 @@ def scheduler(epoch):
 if __name__ == '__main__':
     train_im, train_labels, val_im, val_labels, label_names = get_data()
     print(label_names)
+    print(len(train_im))
     try:
-        with tf.device('/device:GPU:1'):
+        with tf.device('/device:GPU:0'):
             input = tf.keras.Input(shape=(train_im.shape[1:]))
             x = Conv2D(32, 3,strides= 2,padding='same', kernel_regularizer=tf.keras.regularizers.l2(lamb),
                        activity_regularizer=tf.keras.regularizers.l2(lamb))(input)
@@ -105,15 +109,11 @@ if __name__ == '__main__':
             x = b_block(x, num_channels = 24, exp_fac=6, n=2, s=2)
             x = b_block(x, num_channels = 32, exp_fac=6, n=3, s=2)
             x = b_block(x, num_channels = 64, exp_fac=6, n=4, s=2)
-            '''
-            x = b_block(x, num_channels = 96, exp_fac=6, n=3, s=1)
-            x = b_block(x, num_channels = 160, exp_fac=6, n=3, s=2)
-            x = b_block(x, num_channels = 320, exp_fac=6, n=1, s=1)
-            '''
-            x = Conv2D(1280, 1, strides=1, padding='same', kernel_regularizer=tf.keras.regularizers.l2(lamb),
+
+            x = Conv2D(160, 1, strides=1, padding='same', kernel_regularizer=tf.keras.regularizers.l2(lamb),
                        activity_regularizer=tf.keras.regularizers.l2(lamb))(x)
             x = GlobalAveragePooling2D()(x)
-            x = Reshape((1,1,1280))(x)
+            x = Reshape((1,1,160))(x)
             x = Conv2D(len(label_names),1, padding='same')(x)
             x = Activation('softmax')(x)
             output = Reshape((len(label_names),))(x)
@@ -121,7 +121,7 @@ if __name__ == '__main__':
 
 
             #save model checkpoints
-            cp_path = path_to_parent + r"Plant-Disease-Classifier/model_checkpoints/{epoch:04d}.cpkt"
+            cp_path = path_to_parent + r"Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
             cp_dir = os.path.dirname(cp_path)
             cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=10,
                                               verbose=1)
@@ -132,7 +132,6 @@ if __name__ == '__main__':
                                                                      horizontal_flip=True,
                                                                      vertical_flip=True,
                                                                      data_format="channels_last",
-                                                                     zca_whitening=True,
                                                                      brightness_range = [.2, 1.0],
                                                                      shear_range = 45,
                                                                      )

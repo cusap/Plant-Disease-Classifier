@@ -9,9 +9,9 @@ from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
 
 
 PERCENT_TRAIN = .8
-lamb = .000001
-path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
-segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\segmented\Apple*"
+lamb = 0
+path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
+segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\segmented\*"
 learning_rate = .045
 lr_decay = .98
 batch_size = 32
@@ -24,7 +24,7 @@ def shuffle(data_im, data_labels):
 
 def format_data(train_images, train_labels, num_category):
     train_images = train_images / 255
-    train_images = train_images.astype('float32')
+    #train_images = train_images.astype('float32')
     train_labels = train_labels.astype('float32')
     train_labels = tf.keras.utils.to_categorical(train_labels, num_category)
     return train_images, train_labels
@@ -37,15 +37,22 @@ def open_data():
         label = label_name.split('\\')[-1]
         print(label)
         label_names.append(label)
-        for pic_name in glob.glob(label_name + "\\*"):
-            im = Image.open(pic_name)
-            im.load()
-            image_list.append(np.asarray(im, dtype='float32'))
-            label_list.append(i)
+        if i == 16:
+            continue
+        if i == 34:
+            continue
+        for count, pic_name in enumerate(glob.glob(label_name + "\\*")):
+            if count%8==0:
+                im = Image.open(pic_name)
+                im.load()
+                new_im = np.asarray(im, dtype='float32')
+                image_list.append(new_im)
+                label_list.append(i)
     return np.asarray(image_list), np.asarray(label_list), label_names
 
 def get_data():
     image_list, label_list, label_names = open_data()
+    print('starting format')
     image_list, label_list = format_data(image_list, label_list, len(label_names))
     image_list, label_list = shuffle(image_list, label_list)
     border = int(len(image_list)*PERCENT_TRAIN)
@@ -67,16 +74,13 @@ def bottleneck_s1(orig, num_channels, exp_fac, resid=True):
         return x
 
 def bottleneck_s2(x, num_channels, exp_fac):
-    x = Conv2D(x.get_shape()[-1]*exp_fac, kernel_size=(1, 1), strides=1, padding='same', kernel_regularizer=tf.keras.regularizers.l2(lamb),
-               activity_regularizer=tf.keras.regularizers.l2(lamb))(x)
+    x = Conv2D(x.get_shape()[-1]*exp_fac, kernel_size=(1, 1), strides=1, padding='same')(x)
     x = BatchNormalization()(x)
     x = ReLU(max_value=6)(x)
-    x = DepthwiseConv2D(3, padding='same', strides= 2, kernel_regularizer=tf.keras.regularizers.l2(lamb),
-                        activity_regularizer=tf.keras.regularizers.l2(lamb))(x)
+    x = DepthwiseConv2D(3, padding='same', strides= 2)(x)
     x = BatchNormalization()(x)
     x = ReLU(max_value=6)(x)
-    x = Conv2D(num_channels, kernel_size=(1, 1), strides= 1, padding='same', kernel_regularizer=tf.keras.regularizers.l2(lamb),
-               activity_regularizer=tf.keras.regularizers.l2(lamb), activation='linear')(x)
+    x = Conv2D(num_channels, kernel_size=(1, 1), strides= 1, padding='same', activation='linear')(x)
     return x
 
 def b_block(x, num_channels, exp_fac, n, s):
@@ -99,6 +103,7 @@ if __name__ == '__main__':
     train_im, train_labels, val_im, val_labels, label_names = get_data()
     print(label_names)
     print(len(train_im))
+    print(train_im[1])
     try:
         with tf.device('/device:GPU:0'):
             input = tf.keras.Input(shape=(train_im.shape[1:]))

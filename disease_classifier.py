@@ -53,6 +53,7 @@ def open_data():
                     continue
                 image_list.append(new_im / 255)
                 label_list.append(i)
+    print("image length: " + str(len(image_list)))
     return np.asarray(image_list), np.asarray(label_list), label_names
 
 def get_data():

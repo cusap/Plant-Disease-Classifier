@@ -12,9 +12,9 @@ import matplotlib.image as mpimg
 
 PERCENT_TRAIN = .8
 lamb = 0
-#path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
-path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
-segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color\*"
+path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
+#path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
+segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color/*"
 learning_rate = .045
 #learning_rate = .1
 lr_decay = .98
@@ -39,10 +39,10 @@ def open_data():
     label_list =[]
     label_names = []
     for i,label_name in enumerate(glob.glob(segmented_path)):
-        label = label_name.split('\\')[-1]
+        label = label_name.split('/')[-1]
         print(label)
         label_names.append(label)
-        for count, pic_name in enumerate(glob.glob(label_name + "\\*")):
+        for count, pic_name in enumerate(glob.glob(label_name + "/*")):
             if random.randint(1,sample_ratio)==1:
                 try:
                     im = Image.open(pic_name)
@@ -160,7 +160,7 @@ if __name__ == '__main__':
 
 
             #save model checkpoints
-            cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
+            cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
             cp_dir = os.path.dirname(cp_path)
             cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=10,
                                               verbose=1)

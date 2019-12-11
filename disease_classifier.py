@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import tensorflow as tf
+import tensorflow_hub as hub
 from PIL import Image
 import random
 import glob
@@ -12,15 +13,16 @@ import matplotlib.image as mpimg
 
 PERCENT_TRAIN = .8
 lamb = 0
-path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
-#path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
-segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color/*"
+#path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
+path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
+segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color\*"
 learning_rate = .045
 #learning_rate = .1
 lr_decay = .98
 batch_size = 16
 epochs = 200
 sample_ratio = 16
+
 
 def shuffle(data_im, data_labels):
     shuffled_index = np.arange(len(data_labels))
@@ -39,22 +41,24 @@ def open_data():
     label_list =[]
     label_names = []
     for i,label_name in enumerate(glob.glob(segmented_path)):
-        label = label_name.split('/')[-1]
+        label = label_name.split('\\')[-1]
         print(label)
         label_names.append(label)
-        for count, pic_name in enumerate(glob.glob(label_name + "/*")):
+        for count, pic_name in enumerate(glob.glob(label_name + "\\*")):
             if random.randint(1,sample_ratio)==1:
                 try:
                     im = Image.open(pic_name)
                     im.load()
                     new_im = np.asarray(im, dtype='float32')
-                    image_list.append(new_im / 255)
+                    new_im = new_im/255
+                    image_list.append(new_im)
                     label_list.append(i)
+
                 except:
                     print("bad image")
                     continue
-
     print("image length: " + str(len(image_list)))
+
     return np.asarray(image_list), np.asarray(label_list), label_names
 
 def get_data():
@@ -150,6 +154,9 @@ if __name__ == '__main__':
             
             model = tf.keras.Model(inputs=input, outputs=output)
             '''
+
+            '''
+            #imported model code
             imported_model = tf.keras.applications.mobilenet_v2.MobileNetV2(input_shape=(train_im.shape[1:]), weights=None, input_tensor= input)
             x = imported_model.output
             x = Dense(len(label_names))(x)
@@ -157,10 +164,21 @@ if __name__ == '__main__':
             output = Activation('softmax')(x)
 
             model = tf.keras.Model(inputs=input, outputs=output)
+            '''
 
+            #Some other implementation's code cuz im a dumb boy
+            model = tf.keras.Sequential([
+                hub.KerasLayer("https://tfhub.dev/google/tf2-preview/mobilenet_v2/feature_vector/4",
+                               output_shape=[1280],
+                               trainable=False),
+                tf.keras.layers.Dropout(0.4),
+                tf.keras.layers.Dense(512, activation='relu'),
+                tf.keras.layers.Dropout(rate=0.2),
+                tf.keras.layers.Dense(len(label_names), activation='softmax')
+            ])
 
             #save model checkpoints
-            cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
+            cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
             cp_dir = os.path.dirname(cp_path)
             cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=10,
                                               verbose=1)
@@ -180,8 +198,8 @@ if __name__ == '__main__':
 
             im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=40,
                                                                      zoom_range=[0.1, .1],
-                                                                     width_shift_range=0.04,
-                                                                     height_shift_range=0.04,
+                                                                     width_shift_range=0.2,
+                                                                     height_shift_range=0.2,
                                                                      horizontal_flip=True,
                                                                      vertical_flip=True,
                                                                      data_format="channels_last",
@@ -196,18 +214,22 @@ if __name__ == '__main__':
             model.compile(loss='categorical_crossentropy',
                           optimizer=opt,
                           metrics=['accuracy'])
-            model.summary()
-
+            '''
             model_log = model.fit(train_im, train_labels, batch_size=batch_size, epochs=epochs,
                                   callbacks=[lr_scheduler, cp_callback],
                                   validation_data=(val_im, val_labels), verbose=2)
+                                  '''
 
-            '''
+
+
+
+
             model_log = model.fit_generator(im_gen.flow(train_im, train_labels, batch_size=batch_size),
                                             steps_per_epoch=train_im.shape[0] // batch_size, epochs=epochs,
                                             callbacks=[lr_scheduler, cp_callback],
                                             validation_data=(val_im, val_labels), verbose=2)
-            '''
+            model.summary()
+
     except RuntimeError as e:
         print(e)
 

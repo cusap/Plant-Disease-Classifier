@@ -155,17 +155,19 @@ if __name__ == '__main__':
             model = tf.keras.Model(inputs=input, outputs=output)
             '''
 
-            '''
+
             #imported model code
-            imported_model = tf.keras.applications.mobilenet_v2.MobileNetV2(input_shape=(train_im.shape[1:]), weights=None, input_tensor= input)
+            imported_model = tf.keras.applications.mobilenet_v2.MobileNetV2(input_shape=(train_im.shape[1:]), input_tensor= input)
             x = imported_model.output
             x = Dense(len(label_names))(x)
             x = Dropout(.25)(x)
             output = Activation('softmax')(x)
 
             model = tf.keras.Model(inputs=input, outputs=output)
-            '''
 
+
+
+            '''
             #Some other implementation's code cuz im a dumb boy
             model = tf.keras.Sequential([
                 hub.KerasLayer("https://tfhub.dev/google/tf2-preview/mobilenet_v2/feature_vector/4",
@@ -176,7 +178,7 @@ if __name__ == '__main__':
                 tf.keras.layers.Dropout(rate=0.2),
                 tf.keras.layers.Dense(len(label_names), activation='softmax')
             ])
-
+            '''
             #save model checkpoints
             cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
             cp_dir = os.path.dirname(cp_path)

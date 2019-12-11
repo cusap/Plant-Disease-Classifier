@@ -12,15 +12,15 @@ import matplotlib.image as mpimg
 
 PERCENT_TRAIN = .8
 lamb = 0
-path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
-#path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
-segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color/*"
+#path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
+path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
+segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color\*"
 learning_rate = .045
 #learning_rate = .1
 lr_decay = .98
 batch_size = 16
 epochs = 200
-sample_ratio = 8
+sample_ratio = 16
 
 def shuffle(data_im, data_labels):
     shuffled_index = np.arange(len(data_labels))
@@ -39,20 +39,21 @@ def open_data():
     label_list =[]
     label_names = []
     for i,label_name in enumerate(glob.glob(segmented_path)):
-        label = label_name.split('/')[-1]
+        label = label_name.split('\\')[-1]
         print(label)
         label_names.append(label)
-        for count, pic_name in enumerate(glob.glob(label_name + "/*")):
+        for count, pic_name in enumerate(glob.glob(label_name + "\\*")):
             if random.randint(1,sample_ratio)==1:
                 try:
                     im = Image.open(pic_name)
                     im.load()
                     new_im = np.asarray(im, dtype='float32')
+                    image_list.append(new_im / 255)
+                    label_list.append(i)
                 except:
                     print("bad image")
                     continue
-                image_list.append(new_im / 255)
-                label_list.append(i)
+
     print("image length: " + str(len(image_list)))
     return np.asarray(image_list), np.asarray(label_list), label_names
 
@@ -123,7 +124,7 @@ if __name__ == '__main__':
             x = Dense(len(label_names))(x)
             output = Activation('softmax')(x)
             '''
-
+            '''
             x = Conv2D(32, 3,strides= 2,padding='same')(input)
 
             x = b_block(x, num_channels = 16, exp_fac=1, n=1, s=1)
@@ -146,11 +147,20 @@ if __name__ == '__main__':
             x = Activation('softmax')(x)
             output = Reshape((len(label_names),))(x)
             #output = Reshape((len(label_names),))(x)
+            
+            model = tf.keras.Model(inputs=input, outputs=output)
+            '''
+            imported_model = tf.keras.applications.mobilenet_v2.MobileNetV2(input_shape=(train_im.shape[1:]), weights=None, input_tensor= input)
+            x = imported_model.output
+            x = Dense(len(label_names))(x)
+            x = Dropout(.25)(x)
+            output = Activation('softmax')(x)
 
             model = tf.keras.Model(inputs=input, outputs=output)
 
+
             #save model checkpoints
-            cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
+            cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
             cp_dir = os.path.dirname(cp_path)
             cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=10,
                                               verbose=1)
@@ -181,10 +191,10 @@ if __name__ == '__main__':
             im_gen.fit(train_im)
             lr_scheduler = LearningRateScheduler(scheduler, verbose=1)
 
-            #opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9, momentum=.9)
+            opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9, momentum=.9)
 
             model.compile(loss='categorical_crossentropy',
-                          optimizer=tf.keras.optimizers.Adam(learning_rate),
+                          optimizer=opt,
                           metrics=['accuracy'])
             model.summary()
 

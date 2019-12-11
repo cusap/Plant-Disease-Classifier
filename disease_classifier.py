@@ -2,6 +2,7 @@ import os
 import numpy as np
 import tensorflow as tf
 from PIL import Image
+import random
 import glob
 from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, AveragePooling2D ,BatchNormalization, Add, \
     DepthwiseConv2D, ReLU, Reshape
@@ -19,6 +20,7 @@ learning_rate = .045
 lr_decay = .98
 batch_size = 16
 epochs = 200
+sample_ratio = 8
 
 def shuffle(data_im, data_labels):
     shuffled_index = np.arange(len(data_labels))
@@ -40,16 +42,16 @@ def open_data():
         label = label_name.split('/')[-1]
         print(label)
         label_names.append(label)
-        if i == 16:
-            continue
-        if i == 34:
-            continue
         for count, pic_name in enumerate(glob.glob(label_name + "/*")):
-            if count%8==0:
-                im = Image.open(pic_name)
-                im.load()
-                new_im = np.asarray(im, dtype='float32')
-                image_list.append(new_im/255)
+            if random.randint(1,sample_ratio)==1:
+                try:
+                    im = Image.open(pic_name)
+                    im.load()
+                    new_im = np.asarray(im, dtype='float32')
+                except:
+                    print("bad image")
+                    continue
+                image_list.append(new_im / 255)
                 label_list.append(i)
     return np.asarray(image_list), np.asarray(label_list), label_names
 

@@ -5,7 +5,7 @@ import tensorflow_hub as hub
 from PIL import Image
 import random
 import glob
-from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, AveragePooling2D ,BatchNormalization, Add, \
+from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, GlobalAveragePooling2D,AveragePooling2D ,BatchNormalization, Add, \
     DepthwiseConv2D, ReLU, Reshape
 from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
 import matplotlib.pyplot as plt
@@ -15,12 +15,13 @@ PERCENT_TRAIN = .8
 lamb = 0
 path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
 #path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
+#segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color\*"
 segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color/*"
-learning_rate = .045
-#learning_rate = .1
+#learning_rate = .045
+learning_rate = .0001
 lr_decay = .98
 batch_size = 16
-epochs = 200
+epochs = 10
 sample_ratio = 16
 
 
@@ -157,14 +158,18 @@ if __name__ == '__main__':
 
 
             #imported model code
-            imported_model = tf.keras.applications.mobilenet_v2.MobileNetV2(input_shape=(train_im.shape[1:]), input_tensor= input)
+            imported_model = tf.keras.applications.mobilenet_v2.MobileNetV2(input_shape=(train_im.shape[1:]), include_top = False, input_tensor= input)
             x = imported_model.output
+            x = GlobalAveragePooling2D()(x)
+            print(x.get_shape)
             x = Dense(len(label_names))(x)
             x = Dropout(.25)(x)
             output = Activation('softmax')(x)
 
             model = tf.keras.Model(inputs=input, outputs=output)
 
+            for layer in imported_model.layers:
+                layer.trainable = False
 
 
             '''

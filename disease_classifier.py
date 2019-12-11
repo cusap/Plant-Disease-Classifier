@@ -17,11 +17,11 @@ path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
 #path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
 #segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color\*"
 segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color/*"
-#learning_rate = .045
-learning_rate = .0001
+learning_rate = .045
+#learning_rate = .0001
 lr_decay = .98
 batch_size = 16
-epochs = 10
+epochs = 200
 sample_ratio = 16
 
 
@@ -52,6 +52,7 @@ def open_data():
                     im.load()
                     new_im = np.asarray(im, dtype='float32')
                     new_im = new_im/255
+                    new_im = tf.image.resize(new_im,(224,224))
                     image_list.append(new_im)
                     label_list.append(i)
 
@@ -158,7 +159,7 @@ if __name__ == '__main__':
 
 
             #imported model code
-            imported_model = tf.keras.applications.mobilenet_v2.MobileNetV2(input_shape=(train_im.shape[1:]), include_top = False, input_tensor= input)
+            imported_model = tf.keras.applications.mobilenet_v2.MobileNetV2(input_shape=(train_im.shape[1:]), include_top = False, input_tensor= input, weights='imagenet')
             x = imported_model.output
             x = GlobalAveragePooling2D()(x)
             print(x.get_shape)
@@ -168,9 +169,10 @@ if __name__ == '__main__':
 
             model = tf.keras.Model(inputs=input, outputs=output)
 
+            '''
             for layer in imported_model.layers:
                 layer.trainable = False
-
+            '''
 
             '''
             #Some other implementation's code cuz im a dumb boy

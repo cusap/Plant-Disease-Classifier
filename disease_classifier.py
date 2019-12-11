@@ -134,12 +134,14 @@ if __name__ == '__main__':
             x = b_block(x, num_channels=160, exp_fac=6, n=3, s=2)
             x = b_block(x, num_channels=320, exp_fac=6, n=1, s=1)
             x = Conv2D(1280, 1, strides=1, padding='same')(x)
+            x = Dropout(.25)(x)
             x = AveragePooling2D(pool_size=(8,8))(x)
             x = Reshape((1,1,1280))(x)
             x = Conv2D(len(label_names),1, padding='same')(x)
+            x = Dropout(.25)(x)
 
-            x = Reshape((len(label_names),))(x)
-            output = Activation('softmax')(x)
+            x = Activation('softmax')(x)
+            output = Reshape((len(label_names),))(x)
             #output = Reshape((len(label_names),))(x)
 
             model = tf.keras.Model(inputs=input, outputs=output)

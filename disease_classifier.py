@@ -15,8 +15,8 @@ PERCENT_TRAIN = .8
 lamb = 0
 #path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
 path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
-#segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color"
-segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color"
+segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color"
+#segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color"
 learning_rate = .045
 #learning_rate = .0001
 lr_decay = .98
@@ -26,6 +26,23 @@ sample_ratio = 16
 data_shape = (224,224,3)
 num_cat = 38
 
+def clean_dataset():
+
+    for i,label_name in enumerate(glob.glob(segmented_path)):
+        cnt = 0
+        label = label_name.split('\\')[-1]
+        print(label)
+        for count, pic_name in enumerate(glob.glob(label_name + "\\*")):
+            try:
+                im = Image.open(pic_name)
+                im.load()
+                new_im = np.asarray(im, dtype='float32')
+                new_im = new_im / 255
+            except Exception as e:
+                print(e)
+                print("bleh")
+                cnt += 1
+        print("corrupted count: " +str(cnt))
 def shuffle(data_im, data_labels):
     shuffled_index = np.arange(len(data_labels))
     np.random.shuffle(shuffled_index)
@@ -115,11 +132,12 @@ def scheduler(epoch):
 
 
 if __name__ == '__main__':
+    clean_dataset()
     #train_im, train_labels, val_im, val_labels, label_names = get_data()
     #print(len(train_im))
     try:
         with tf.device('/device:GPU:0'):
-            input = tf.keras.Input(shape=data_shape)
+            #input = tf.keras.Input(shape=data_shape)
             '''
             #basic
             x = Conv2D(32,3,3)(input)
@@ -127,8 +145,10 @@ if __name__ == '__main__':
             x = Conv2D(32, 3, 3)(x)
             #x = Conv2D(32, 3, 2)(x)
             x = Flatten()(x)
-            x = Dense(len(label_names))(x)
+            x = Dense(num_cat)(x)
             output = Activation('softmax')(x)
+            model = tf.keras.Model(inputs=input, outputs=output)
+
             '''
             '''
             x = Conv2D(32, 3,strides= 2,padding='same')(input)
@@ -159,20 +179,20 @@ if __name__ == '__main__':
 
 
             #imported model code
-            imported_model = tf.keras.applications.mobilenet_v2.MobileNetV2(input_shape=data_shape, include_top = False, input_tensor= input, weights='imagenet')
+            imported_model = tf.keras.applications.MobileNetV2(input_shape=data_shape, include_top = False, weights='imagenet')
+            '''
             x = imported_model.output
             x = GlobalAveragePooling2D()(x)
             print(x.get_shape)
             x = Dense(num_cat)(x)
             x = Dropout(.25)(x)
             output = Activation('softmax')(x)
-
+        
             model = tf.keras.Model(inputs=input, outputs=output)
+            '''
+            imported_model.trainable =False
 
-            '''
-            for layer in imported_model.layers:
-                layer.trainable = False
-            '''
+            model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
 
             '''
             #Some other implementation's code cuz im a dumb boy
@@ -187,8 +207,8 @@ if __name__ == '__main__':
             ])
             '''
             #save model checkpoints
-            cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
-            #cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
+            #cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
+            cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
             cp_dir = os.path.dirname(cp_path)
             cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=10,
                                               verbose=1)
@@ -216,13 +236,16 @@ if __name__ == '__main__':
                                                                      data_format="channels_last",
                                                                      brightness_range = [.2, 1.0],
                                                                      )
-            train_generator = im_gen.flow_from_directory(
+            val_gen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
+            no_aug = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
+
+            train_generator = no_aug.flow_from_directory(
                 segmented_path,
                 target_size=(224, 224),
                 batch_size=batch_size,
                 class_mode='categorical')
 
-            val_gen = tf.keras.preprocessing.image.ImageDataGenerator(rescale= 1./255)
+
 
             val_generator = val_gen.flow_from_directory(
                 segmented_path,
@@ -234,7 +257,7 @@ if __name__ == '__main__':
             opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9, momentum=.9)
 
             model.compile(loss='categorical_crossentropy',
-                          optimizer=opt,
+                          optimizer=tf.keras.optimizers.Adam(),
                           metrics=['accuracy'])
             '''
             model_log = model.fit(train_im, train_labels, batch_size=batch_size, epochs=epochs,
@@ -244,10 +267,9 @@ if __name__ == '__main__':
 
             model.summary()
 
-            model_log = model.fit_generator(train_generator,
-                                            steps_per_epoch=60000 // batch_size, epochs=epochs,
-                                            callbacks=[lr_scheduler, cp_callback],
-                                            validation_data=val_generator, verbose=2)
+            model_log = model.fit_generator(train_generator, epochs=10,
+                                            callbacks=[cp_callback],
+                                            validation_data=val_generator, verbose=1)
 
 
     except RuntimeError as e:

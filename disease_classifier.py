@@ -13,7 +13,7 @@ PERCENT_TRAIN = .8
 lamb = 0
 path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
 #path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
-segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented/*"
+segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color/*"
 learning_rate = .045
 #learning_rate = .1
 lr_decay = .98
@@ -142,8 +142,6 @@ if __name__ == '__main__':
             output = Activation('softmax')(x)
             #output = Reshape((len(label_names),))(x)
 
-
-
             model = tf.keras.Model(inputs=input, outputs=output)
 
             #save model checkpoints
@@ -165,7 +163,7 @@ if __name__ == '__main__':
                                                                      )
                                                                      '''
 
-            im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=360,
+            im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=40,
                                                                      zoom_range=[0.1, .1],
                                                                      width_shift_range=0.04,
                                                                      height_shift_range=0.04,
@@ -173,33 +171,28 @@ if __name__ == '__main__':
                                                                      vertical_flip=True,
                                                                      data_format="channels_last",
                                                                      brightness_range = [.2, 1.0],
-                                                                     shear_range =45
                                                                      )
 
             im_gen.fit(train_im)
-
             lr_scheduler = LearningRateScheduler(scheduler, verbose=1)
 
+            #opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9, momentum=.9)
 
-            opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rhocu=.9, momentum=.9)
-
-            model.compile(loss=tf.keras.losses.categorical_crossentropy,
-                          optimizer=opt,
+            model.compile(loss='categorical_crossentropy',
+                          optimizer=tf.keras.optimizers.Adam(learning_rate),
                           metrics=['accuracy'])
             model.summary()
 
-
-            '''
             model_log = model.fit(train_im, train_labels, batch_size=batch_size, epochs=epochs,
                                   callbacks=[lr_scheduler, cp_callback],
                                   validation_data=(val_im, val_labels), verbose=2)
-            '''
 
+            '''
             model_log = model.fit_generator(im_gen.flow(train_im, train_labels, batch_size=batch_size),
                                             steps_per_epoch=train_im.shape[0] // batch_size, epochs=epochs,
                                             callbacks=[lr_scheduler, cp_callback],
                                             validation_data=(val_im, val_labels), verbose=2)
-
+            '''
     except RuntimeError as e:
         print(e)
 

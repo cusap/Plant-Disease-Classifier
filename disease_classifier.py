@@ -13,17 +13,18 @@ import matplotlib.image as mpimg
 
 PERCENT_TRAIN = .8
 lamb = 0
-path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
-#path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
-#segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color\*"
-segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color/*"
+#path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
+path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
+#segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color"
+segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color"
 learning_rate = .045
 #learning_rate = .0001
 lr_decay = .98
 batch_size = 16
 epochs = 200
 sample_ratio = 16
-
+data_shape = (224,224,3)
+num_cat = 38
 
 def shuffle(data_im, data_labels):
     shuffled_index = np.arange(len(data_labels))
@@ -31,8 +32,9 @@ def shuffle(data_im, data_labels):
     return data_im[shuffled_index], data_labels[shuffled_index]
 
 def format_data(train_images, train_labels, num_category):
-    #train_images = train_images / 255
-    #train_images = train_images.astype('float32')
+    train_images = tf.image.resize(train_images, (224,224))
+    print(train_images.shape)
+
     train_labels = train_labels.astype('float32')
     train_labels = tf.keras.utils.to_categorical(train_labels, num_category)
     return train_images, train_labels
@@ -52,15 +54,13 @@ def open_data():
                     im.load()
                     new_im = np.asarray(im, dtype='float32')
                     new_im = new_im/255
-                    new_im = tf.image.resize(new_im,(224,224))
                     image_list.append(new_im)
                     label_list.append(i)
 
                 except:
                     print("bad image")
                     continue
-    print("image length: " + str(len(image_list)))
-
+    image_list, label_list = shuffle(image_list, label_list)
     return np.asarray(image_list), np.asarray(label_list), label_names
 
 def get_data():
@@ -115,11 +115,11 @@ def scheduler(epoch):
 
 
 if __name__ == '__main__':
-    train_im, train_labels, val_im, val_labels, label_names = get_data()
-    print(len(train_im))
+    #train_im, train_labels, val_im, val_labels, label_names = get_data()
+    #print(len(train_im))
     try:
         with tf.device('/device:GPU:0'):
-            input = tf.keras.Input(shape=(train_im.shape[1:]))
+            input = tf.keras.Input(shape=data_shape)
             '''
             #basic
             x = Conv2D(32,3,3)(input)
@@ -159,11 +159,11 @@ if __name__ == '__main__':
 
 
             #imported model code
-            imported_model = tf.keras.applications.mobilenet_v2.MobileNetV2(input_shape=(train_im.shape[1:]), include_top = False, input_tensor= input, weights='imagenet')
+            imported_model = tf.keras.applications.mobilenet_v2.MobileNetV2(input_shape=data_shape, include_top = False, input_tensor= input, weights='imagenet')
             x = imported_model.output
             x = GlobalAveragePooling2D()(x)
             print(x.get_shape)
-            x = Dense(len(label_names))(x)
+            x = Dense(num_cat)(x)
             x = Dropout(.25)(x)
             output = Activation('softmax')(x)
 
@@ -188,6 +188,7 @@ if __name__ == '__main__':
             '''
             #save model checkpoints
             cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
+            #cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
             cp_dir = os.path.dirname(cp_path)
             cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=10,
                                               verbose=1)
@@ -211,11 +212,23 @@ if __name__ == '__main__':
                                                                      height_shift_range=0.2,
                                                                      horizontal_flip=True,
                                                                      vertical_flip=True,
+                                                                     rescale=1./255,
                                                                      data_format="channels_last",
                                                                      brightness_range = [.2, 1.0],
                                                                      )
+            train_generator = im_gen.flow_from_directory(
+                segmented_path,
+                target_size=(224, 224),
+                batch_size=batch_size,
+                class_mode='categorical')
 
-            im_gen.fit(train_im)
+            val_gen = tf.keras.preprocessing.image.ImageDataGenerator(rescale= 1./255)
+
+            val_generator = val_gen.flow_from_directory(
+                segmented_path,
+                target_size=(224, 224),
+                batch_size=batch_size,
+                class_mode='categorical')
             lr_scheduler = LearningRateScheduler(scheduler, verbose=1)
 
             opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9, momentum=.9)
@@ -229,15 +242,13 @@ if __name__ == '__main__':
                                   validation_data=(val_im, val_labels), verbose=2)
                                   '''
 
-
-
-
-
-            model_log = model.fit_generator(im_gen.flow(train_im, train_labels, batch_size=batch_size),
-                                            steps_per_epoch=train_im.shape[0] // batch_size, epochs=epochs,
-                                            callbacks=[lr_scheduler, cp_callback],
-                                            validation_data=(val_im, val_labels), verbose=2)
             model.summary()
+
+            model_log = model.fit_generator(train_generator,
+                                            steps_per_epoch=60000 // batch_size, epochs=epochs,
+                                            callbacks=[lr_scheduler, cp_callback],
+                                            validation_data=val_generator, verbose=2)
+
 
     except RuntimeError as e:
         print(e)

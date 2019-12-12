@@ -13,10 +13,12 @@ import matplotlib.image as mpimg
 
 PERCENT_TRAIN = .8
 lamb = 0
-#path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
-path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
-segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color"
-#segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color"
+path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
+#path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
+#segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color"
+segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color"
+cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
+#cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
 learning_rate = .045
 #learning_rate = .0001
 lr_decay = .98
@@ -192,7 +194,7 @@ if __name__ == '__main__':
             '''
             imported_model.trainable =False
 
-            model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
+            model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat),Activation('softmax')])
 
             '''
             #Some other implementation's code cuz im a dumb boy
@@ -207,8 +209,7 @@ if __name__ == '__main__':
             ])
             '''
             #save model checkpoints
-            #cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
-            cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
+
             cp_dir = os.path.dirname(cp_path)
             cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=10,
                                               verbose=1)

@@ -13,12 +13,12 @@ import matplotlib.image as mpimg
 
 PERCENT_TRAIN = .8
 lamb = 0
-path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
-#path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
-#segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color"
-segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color"
-cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
-#cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
+#path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
+path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
+segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color"
+#segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color"
+#cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
+cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
 learning_rate = .045
 #learning_rate = .0001
 lr_decay = .98
@@ -194,7 +194,20 @@ if __name__ == '__main__':
             '''
             imported_model.trainable =False
 
-            model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat),Activation('softmax')])
+            for layer in imported_model.layers[90:]:
+                layer.trainable = True
+            model = tf.keras.Sequential([imported_model,
+                                         GlobalAveragePooling2D(),
+                                         Dense(96),
+                                         BatchNormalization(),
+                                         ReLU(),
+                                         Dropout(.25),
+                                         Dense(64),
+                                         BatchNormalization(),
+                                         ReLU(),
+                                         Dropout(.25),
+                                         Dense(num_cat),
+                                         Activation('softmax')])
 
             '''
             #Some other implementation's code cuz im a dumb boy
@@ -214,7 +227,7 @@ if __name__ == '__main__':
             cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=10,
                                               verbose=1)
 
-            '''
+
             im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=360,
                                                                      zoom_range=[0.5, 1.0],
                                                                      width_shift_range=0.4,
@@ -225,8 +238,8 @@ if __name__ == '__main__':
                                                                      brightness_range = [.2, 1.0],
                                                                      shear_range = 45,
                                                                      )
-                                                                     '''
 
+            '''
             im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=40,
                                                                      zoom_range=[0.1, .1],
                                                                      width_shift_range=0.2,
@@ -237,10 +250,11 @@ if __name__ == '__main__':
                                                                      data_format="channels_last",
                                                                      brightness_range = [.2, 1.0],
                                                                      )
+            '''
             val_gen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
             no_aug = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
 
-            train_generator = no_aug.flow_from_directory(
+            train_generator = im_gen.flow_from_directory(
                 segmented_path,
                 target_size=(224, 224),
                 batch_size=batch_size,
@@ -258,7 +272,7 @@ if __name__ == '__main__':
             opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9, momentum=.9)
 
             model.compile(loss='categorical_crossentropy',
-                          optimizer=tf.keras.optimizers.Adam(),
+                          optimizer=tf.keras.optimizers.RMSprop(learning_rate=.0001),
                           metrics=['accuracy'])
             '''
             model_log = model.fit(train_im, train_labels, batch_size=batch_size, epochs=epochs,
@@ -266,10 +280,11 @@ if __name__ == '__main__':
                                   validation_data=(val_im, val_labels), verbose=2)
                                   '''
 
+
             model.summary()
 
-            model_log = model.fit_generator(train_generator, epochs=10,
-                                            callbacks=[cp_callback],
+            model_log = model.fit_generator(train_generator, epochs=20,
+                                            callbacks=[lr_scheduler, cp_callback],
                                             validation_data=val_generator, verbose=1)
 
 

@@ -15,11 +15,11 @@ PERCENT_TRAIN = .8
 lamb = .000001
 path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
 #path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
-#segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color"
-segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color"
-cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
+#segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\segmented"
+segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
+#cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
 #cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
-cp_path = path_to_parent + r"\Plant-Disease-Classifier\aug-model-checkpoints\{epoch:04d}.cpkt"
+cp_path = path_to_parent + r"/Plant-Disease-Classifier/aug-model-checkpoints/{epoch:04d}.cpkt"
 #learning_rate = .045
 learning_rate = .001
 lr_decay = .98
@@ -202,9 +202,10 @@ if __name__ == '__main__':
             #model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
 
             model = tf.keras.Sequential([imported_model,
+                                         AveragePooling2D(2),
                                          Flatten(),
                                          Dropout(.4),
-                                         Dense(512),
+                                         Dense(256),
                                          BatchNormalization(),
                                          ReLU(),
                                          Dropout(.25),
@@ -226,7 +227,7 @@ if __name__ == '__main__':
             #save model checkpoints
 
             cp_dir = os.path.dirname(cp_path)
-            cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=10,
+            cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=2,
                                               verbose=1)
 
 

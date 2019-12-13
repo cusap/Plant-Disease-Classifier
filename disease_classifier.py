@@ -22,7 +22,7 @@ cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:
 learning_rate = .045
 #learning_rate = .00001
 lr_decay = .98
-batch_size = 16
+batch_size = 64
 epochs = 200
 sample_ratio = 16
 data_shape = (224,224,3)
@@ -192,8 +192,9 @@ if __name__ == '__main__':
         
             model = tf.keras.Model(inputs=input, outputs=output)
             '''
-            '''
+
             imported_model.trainable = False
+            '''
             for layer in imported_model.layers[:90]:
                 layer.trainable = False
             '''
@@ -230,13 +231,14 @@ if __name__ == '__main__':
 
             im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=360,
                                                                      zoom_range=[0.5, 1.0],
-                                                                     width_shift_range=0.4,
-                                                                     height_shift_range=0.4,
+                                                                     width_shift_range=0.2,
+                                                                     height_shift_range=0.2,
                                                                      horizontal_flip=True,
                                                                      vertical_flip=True,
                                                                      data_format="channels_last",
                                                                      brightness_range = [.2, 1.0],
-                                                                     shear_range = 45,
+                                                                     shear_range = .2,
+                                                                     rescale= 1/.255
                                                                      )
 
             '''
@@ -256,6 +258,8 @@ if __name__ == '__main__':
 
             train_generator = im_gen.flow_from_directory(
                 segmented_path,
+                shuffle=True,
+                color_mode="rgb",
                 target_size=(224, 224),
                 batch_size=batch_size,
                 class_mode='categorical')
@@ -264,6 +268,8 @@ if __name__ == '__main__':
 
             val_generator = val_gen.flow_from_directory(
                 segmented_path,
+                shuffle=True,
+                color_mode="rgb",
                 target_size=(224, 224),
                 batch_size=batch_size,
                 class_mode='categorical')
@@ -283,7 +289,7 @@ if __name__ == '__main__':
 
             model.summary()
 
-            model_log = model.fit_generator(train_generator, epochs=epochs,
+            model_log = model.fit_generator(train_generator, epochs=20,
                                             callbacks=[lr_scheduler, cp_callback],
                                             validation_data=val_generator, verbose=1)
 

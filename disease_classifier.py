@@ -19,8 +19,8 @@ segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color"
 #segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color"
 #cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
 cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
-learning_rate = .045
-#learning_rate = .0001
+#learning_rate = .045
+learning_rate = .00001
 lr_decay = .98
 batch_size = 16
 epochs = 200
@@ -272,7 +272,7 @@ if __name__ == '__main__':
             opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9, momentum=.9)
 
             model.compile(loss='categorical_crossentropy',
-                          optimizer=tf.keras.optimizers.RMSprop(learning_rate=.0001),
+                          optimizer=opt,
                           metrics=['accuracy'])
             '''
             model_log = model.fit(train_im, train_labels, batch_size=batch_size, epochs=epochs,

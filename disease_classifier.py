@@ -192,10 +192,13 @@ if __name__ == '__main__':
         
             model = tf.keras.Model(inputs=input, outputs=output)
             '''
-            imported_model.trainable =False
 
-            for layer in imported_model.layers[90:]:
-                layer.trainable = True
+            imported_model.trainable = False
+            for layer in imported_model.layers[:90]:
+                layer.trainable = False
+
+            model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
+            '''
             model = tf.keras.Sequential([imported_model,
                                          GlobalAveragePooling2D(),
                                          Dense(96),
@@ -208,7 +211,7 @@ if __name__ == '__main__':
                                          Dropout(.25),
                                          Dense(num_cat),
                                          Activation('softmax')])
-
+            '''
             '''
             #Some other implementation's code cuz im a dumb boy
             model = tf.keras.Sequential([

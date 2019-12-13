@@ -12,15 +12,15 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 PERCENT_TRAIN = .8
-lamb = 0
+lamb = .000001
 path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
 #path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
 #segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\color"
 segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color"
 cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
 #cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
-#learning_rate = .045
-learning_rate = .00001
+learning_rate = .045
+#learning_rate = .00001
 lr_decay = .98
 batch_size = 16
 epochs = 200
@@ -192,26 +192,23 @@ if __name__ == '__main__':
         
             model = tf.keras.Model(inputs=input, outputs=output)
             '''
-
+            '''
             imported_model.trainable = False
             for layer in imported_model.layers[:90]:
                 layer.trainable = False
-
-            model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
             '''
+            #model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
+
             model = tf.keras.Sequential([imported_model,
                                          GlobalAveragePooling2D(),
-                                         Dense(96),
-                                         BatchNormalization(),
-                                         ReLU(),
-                                         Dropout(.25),
-                                         Dense(64),
+                                         Dropout(.4),
+                                         Dense(512),
                                          BatchNormalization(),
                                          ReLU(),
                                          Dropout(.25),
                                          Dense(num_cat),
                                          Activation('softmax')])
-            '''
+
             '''
             #Some other implementation's code cuz im a dumb boy
             model = tf.keras.Sequential([
@@ -286,7 +283,7 @@ if __name__ == '__main__':
 
             model.summary()
 
-            model_log = model.fit_generator(train_generator, epochs=20,
+            model_log = model.fit_generator(train_generator, epochs=epochs,
                                             callbacks=[lr_scheduler, cp_callback],
                                             validation_data=val_generator, verbose=1)
 

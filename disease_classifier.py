@@ -19,8 +19,9 @@ path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
 segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/color"
 cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
 #cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
-learning_rate = .045
-#learning_rate = .00001
+cp_path = path_to_parent + r"\Plant-Disease-Classifier\aug-model-checkpoints\{epoch:04d}.cpkt"
+#learning_rate = .045
+learning_rate = .001
 lr_decay = .98
 batch_size = 64
 epochs = 200
@@ -201,7 +202,7 @@ if __name__ == '__main__':
             #model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
 
             model = tf.keras.Sequential([imported_model,
-                                         GlobalAveragePooling2D(),
+                                         Flatten(),
                                          Dropout(.4),
                                          Dense(512),
                                          BatchNormalization(),
@@ -238,6 +239,7 @@ if __name__ == '__main__':
                                                                      data_format="channels_last",
                                                                      brightness_range = [.2, 1.0],
                                                                      shear_range = .2,
+                                                                     fill_mode='nearest',
                                                                      rescale= 1/.255
                                                                      )
 

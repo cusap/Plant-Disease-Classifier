@@ -17,13 +17,13 @@ path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
 #path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
 #segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\segmented"
 segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
-cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
-# cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
-#cp_path = path_to_parent + r"/Plant-Disease-Classifier/aug-model-checkpoints/{epoch:04d}.cpkt"
-#learning_rate = .045
-learning_rate = .001
+#cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
+#cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
+cp_path = path_to_parent + r"/Plant-Disease-Classifier/zca-checkpoints/{epoch:04d}.cpkt"
+learning_rate = .045
+#learning_rate = .001
 lr_decay = .98
-batch_size = 64
+batch_size = 32
 epochs = 200
 sample_ratio = 16
 data_shape = (224,224,3)
@@ -202,10 +202,7 @@ if __name__ == '__main__':
             #model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
 
             model = tf.keras.Sequential([imported_model,
-                                         Conv2D(256,3,strides=2,kernel_regularizer=tf.keras.regularizers.l2(lamb),
-            activity_regularizer=tf.keras.regularizers.l2(lamb)),
-                                         BatchNormalization(),
-                                         ReLU(),
+                                         AveragePooling2D(),
                                          Flatten(),
                                          Dropout(.5),
                                          Dense(256,kernel_regularizer=tf.keras.regularizers.l2(lamb),
@@ -246,6 +243,7 @@ if __name__ == '__main__':
                                                                      brightness_range = [.2, 1.0],
                                                                      shear_range = .2,
                                                                      fill_mode='nearest',
+                                                                     zca_whitening=True,
                                                                      rescale= 1/.255
                                                                      )
 

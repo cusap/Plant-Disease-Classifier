@@ -17,9 +17,9 @@ path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
 #path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
 #segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\segmented"
 segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
-#cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
-#cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
-cp_path = path_to_parent + r"/Plant-Disease-Classifier/aug-model-checkpoints/{epoch:04d}.cpkt"
+cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
+# cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
+#cp_path = path_to_parent + r"/Plant-Disease-Classifier/aug-model-checkpoints/{epoch:04d}.cpkt"
 #learning_rate = .045
 learning_rate = .001
 lr_decay = .98
@@ -202,14 +202,19 @@ if __name__ == '__main__':
             #model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
 
             model = tf.keras.Sequential([imported_model,
-                                         AveragePooling2D(2),
-                                         Flatten(),
-                                         Dropout(.4),
-                                         Dense(256),
+                                         Conv2D(256,3,strides=2,kernel_regularizer=tf.keras.regularizers.l2(lamb),
+            activity_regularizer=tf.keras.regularizers.l2(lamb)),
                                          BatchNormalization(),
                                          ReLU(),
-                                         Dropout(.25),
-                                         Dense(num_cat),
+                                         Flatten(),
+                                         Dropout(.5),
+                                         Dense(256,kernel_regularizer=tf.keras.regularizers.l2(lamb),
+            activity_regularizer=tf.keras.regularizers.l2(lamb)),
+                                         BatchNormalization(),
+                                         ReLU(),
+                                         Dropout(.5),
+                                         Dense(num_cat, kernel_regularizer=tf.keras.regularizers.l2(lamb),
+            activity_regularizer=tf.keras.regularizers.l2(lamb)),
                                          Activation('softmax')])
 
             '''

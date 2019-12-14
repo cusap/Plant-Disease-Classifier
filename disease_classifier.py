@@ -6,7 +6,7 @@ from PIL import Image
 import random
 import glob
 from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, GlobalAveragePooling2D,AveragePooling2D ,BatchNormalization, Add, \
-    DepthwiseConv2D, ReLU, Reshape
+    DepthwiseConv2D, ReLU, Reshape, MaxPooling2D
 from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -21,7 +21,7 @@ segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
 #cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
 cp_path = path_to_parent + r"/Plant-Disease-Classifier/zca-checkpoints/{epoch:04d}.cpkt"
 #learning_rate = .045
-learning_rate = .005
+learning_rate = .001
 lr_decay = .98
 batch_size = 32
 epochs = 200
@@ -202,7 +202,7 @@ if __name__ == '__main__':
             #model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
 
             model = tf.keras.Sequential([imported_model,
-                                         AveragePooling2D(),
+                                         MaxPooling2D(),
                                          Flatten(),
                                          Dropout(.5),
                                          Dense(256,kernel_regularizer=tf.keras.regularizers.l2(lamb),

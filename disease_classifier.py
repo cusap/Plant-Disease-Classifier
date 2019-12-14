@@ -243,7 +243,6 @@ if __name__ == '__main__':
                                                                      brightness_range = [.2, 1.0],
                                                                      shear_range = .2,
                                                                      fill_mode='nearest',
-                                                                     zca_whitening=True,
                                                                      rescale= 1/.255
                                                                      )
 

@@ -13,13 +13,13 @@ import matplotlib.image as mpimg
 
 PERCENT_TRAIN = .8
 lamb = .000001
-#path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
-path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
-segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\segmented"
-#segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
+path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
+#path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
+#segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\segmented"
+segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
 #cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
-cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
-#cp_path = path_to_parent + r"/Plant-Disease-Classifier/max-pool-check/{epoch:04d}.cpkt"
+#cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
+cp_path = path_to_parent + r"/Plant-Disease-Classifier/conv-big/{epoch:04d}.cpkt"
 #learning_rate = .045
 learning_rate = .001
 lr_decay = .98

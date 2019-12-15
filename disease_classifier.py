@@ -202,10 +202,9 @@ if __name__ == '__main__':
             #model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
 
             model = tf.keras.Sequential([imported_model,
-                                         Conv2D(512,3),
                                          Flatten(),
                                          Dropout(.5),
-                                         Dense(256,kernel_regularizer=tf.keras.regularizers.l2(lamb),
+                                         Dense(512,kernel_regularizer=tf.keras.regularizers.l2(lamb),
             activity_regularizer=tf.keras.regularizers.l2(lamb)),
                                          BatchNormalization(),
                                          ReLU(),

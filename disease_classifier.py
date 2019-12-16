@@ -12,14 +12,23 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 PERCENT_TRAIN = .8
-lamb = .000001
-path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
-#path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
-#segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\segmented"
-segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
-#cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
-#cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
-cp_path = path_to_parent + r"/Plant-Disease-Classifier/conv-big/{epoch:04d}.cpkt"
+lamb = 1e-8 #.000001
+winnie = 1
+
+if winnie:
+    path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
+    segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
+    cp_path = path_to_parent + r"/Plant-Disease-Classifier/conv-big/{epoch:04d}.cpkt"
+    #cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
+else:
+    path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
+    segmented_path = path_to_parent + r"\PlantVillage-Dataset\raw\segmented"
+    cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
+
+
+
+
+
 #learning_rate = .045
 learning_rate = .001
 lr_decay = .98
@@ -135,7 +144,6 @@ def scheduler(epoch):
 
 
 if __name__ == '__main__':
-    clean_dataset()
     #train_im, train_labels, val_im, val_labels, label_names = get_data()
     #print(len(train_im))
     try:
@@ -153,7 +161,10 @@ if __name__ == '__main__':
             model = tf.keras.Model(inputs=input, outputs=output)
 
             '''
+
+
             '''
+            # my imp
             x = Conv2D(32, 3,strides= 2,padding='same')(input)
 
             x = b_block(x, num_channels = 16, exp_fac=1, n=1, s=1)
@@ -181,19 +192,10 @@ if __name__ == '__main__':
             '''
 
 
-            #imported model code
-            imported_model = tf.keras.applications.MobileNetV2(input_shape=data_shape, include_top = False, weights='imagenet')
-            '''
-            x = imported_model.output
-            x = GlobalAveragePooling2D()(x)
-            print(x.get_shape)
-            x = Dense(num_cat)(x)
-            x = Dropout(.25)(x)
-            output = Activation('softmax')(x)
-        
-            model = tf.keras.Model(inputs=input, outputs=output)
-            '''
 
+            # imported model code
+            imported_model = tf.keras.applications.MobileNetV2(input_shape=data_shape, include_top=False,
+                                                               weights='imagenet')
             imported_model.trainable = False
             '''
             for layer in imported_model.layers[:90]:
@@ -203,28 +205,17 @@ if __name__ == '__main__':
 
             model = tf.keras.Sequential([imported_model,
                                          Flatten(),
-                                         Dropout(.5),
-                                         Dense(512,kernel_regularizer=tf.keras.regularizers.l2(lamb),
+                                         #Dropout(.5),
+                                         Dense(1024,kernel_regularizer=tf.keras.regularizers.l2(lamb),
             activity_regularizer=tf.keras.regularizers.l2(lamb)),
-                                         BatchNormalization(),
+                                         #BatchNormalization(),
                                          ReLU(),
                                          Dropout(.5),
                                          Dense(num_cat, kernel_regularizer=tf.keras.regularizers.l2(lamb),
             activity_regularizer=tf.keras.regularizers.l2(lamb)),
                                          Activation('softmax')])
 
-            '''
-            #Some other implementation's code cuz im a dumb boy
-            model = tf.keras.Sequential([
-                hub.KerasLayer("https://tfhub.dev/google/tf2-preview/mobilenet_v2/feature_vector/4",
-                               output_shape=[1280],
-                               trainable=False),
-                tf.keras.layers.Dropout(0.4),
-                tf.keras.layers.Dense(512, activation='relu'),
-                tf.keras.layers.Dropout(rate=0.2),
-                tf.keras.layers.Dense(len(label_names), activation='softmax')
-            ])
-            '''
+
             #save model checkpoints
 
             cp_dir = os.path.dirname(cp_path)
@@ -238,8 +229,9 @@ if __name__ == '__main__':
                                                                      horizontal_flip=True,
                                                                      data_format="channels_last",
                                                                      shear_range = .2,
-                                                                     fill_mode='nearest',
-                                                                     rescale= 1/.255
+                                                                     fill_mode="nearest",
+                                                                     rescale= 1/.255,
+                                                                     subset="training"
                                                                      )
 
             '''
@@ -254,7 +246,8 @@ if __name__ == '__main__':
                                                                      brightness_range = [.2, 1.0],
                                                                      )
             '''
-            val_gen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
+            val_gen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255,
+                                                                      subset="validation")
             no_aug = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
 
             train_generator = im_gen.flow_from_directory(

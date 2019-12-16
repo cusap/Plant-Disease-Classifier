@@ -232,14 +232,11 @@ if __name__ == '__main__':
                                               verbose=1)
 
 
-            im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=360,
-                                                                     zoom_range=[0.5, 1.0],
+            im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=40,
                                                                      width_shift_range=0.2,
                                                                      height_shift_range=0.2,
                                                                      horizontal_flip=True,
-                                                                     vertical_flip=True,
                                                                      data_format="channels_last",
-                                                                     brightness_range = [.2, 1.0],
                                                                      shear_range = .2,
                                                                      fill_mode='nearest',
                                                                      rescale= 1/.255
@@ -282,7 +279,7 @@ if __name__ == '__main__':
             opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9, momentum=.9)
 
             model.compile(loss='categorical_crossentropy',
-                          optimizer=opt,
+                          optimizer=tf.keras.optimizers.Adam(lr=learning_rate),
                           metrics=['accuracy'])
             '''
             model_log = model.fit(train_im, train_labels, batch_size=batch_size, epochs=epochs,
@@ -294,7 +291,7 @@ if __name__ == '__main__':
             model.summary()
 
             model_log = model.fit_generator(train_generator, epochs=20,
-                                            callbacks=[lr_scheduler, cp_callback],
+                                            callbacks=[cp_callback],
                                             validation_data=val_generator, verbose=1)
 
 

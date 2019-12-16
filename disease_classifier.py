@@ -232,7 +232,7 @@ if __name__ == '__main__':
                                               verbose=1)
 
 
-            im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=40,
+            im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=360,
                                                                      width_shift_range=0.2,
                                                                      height_shift_range=0.2,
                                                                      horizontal_flip=True,

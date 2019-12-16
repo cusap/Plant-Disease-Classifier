@@ -230,8 +230,8 @@ if __name__ == '__main__':
                                                                      data_format="channels_last",
                                                                      shear_range = .2,
                                                                      fill_mode="nearest",
-                                                                     rescale= 1/.255,
-                                                                     subset="training"
+                                                                     rescale= 1/.255
+
                                                                      )
 
             '''
@@ -246,8 +246,7 @@ if __name__ == '__main__':
                                                                      brightness_range = [.2, 1.0],
                                                                      )
             '''
-            val_gen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255,
-                                                                      subset="validation")
+            val_gen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
             no_aug = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
 
             train_generator = im_gen.flow_from_directory(
@@ -256,8 +255,18 @@ if __name__ == '__main__':
                 color_mode="rgb",
                 target_size=(224, 224),
                 batch_size=batch_size,
-                class_mode='categorical')
-
+                class_mode='categorical',
+                subset= "training")
+            #
+            # val_generator = im_gen.flow_from_directory(
+            #     segmented_path,
+            #     shuffle=True,
+            #     color_mode="rgb",
+            #     target_size=(224, 224),
+            #     batch_size=batch_size,
+            #     class_mode='categorical',
+            #     subset="validation")
+            #
 
 
             val_generator = val_gen.flow_from_directory(
@@ -266,7 +275,9 @@ if __name__ == '__main__':
                 color_mode="rgb",
                 target_size=(224, 224),
                 batch_size=batch_size,
-                class_mode='categorical')
+                class_mode='categorical',
+                subset="validation"
+                )
             lr_scheduler = LearningRateScheduler(scheduler, verbose=1)
 
             opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9, momentum=.9)

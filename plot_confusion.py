@@ -26,6 +26,7 @@ if winnie:
     path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
     segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
     cp_path = path_to_parent + r"/Plant-Disease-Classifier/conv-big/{epoch:04d}.cpkt"
+    cp_dir = path_to_parent + r"/Plant-Disease-Classifier/conv-big"
     #cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
 else:
     path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
@@ -180,7 +181,7 @@ if __name__ == '__main__':
             model.summary()
 
 
-            model.load_weights(tf.train.latest_checkpoint(cp_path))
+            model.load_weights(tf.train.latest_checkpoint(cp_dir))
 
             test_gen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
 

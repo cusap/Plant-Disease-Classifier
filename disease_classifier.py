@@ -19,7 +19,7 @@ winnie = 1
 if winnie:
     path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
     segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
-    cp_path = path_to_parent + r"/Plant-Disease-Classifier/conv-big/{epoch:04d}.cpkt"
+    cp_path = path_to_parent + r"/Plant-Disease-Classifier/new-data/{epoch:04d}.cpkt"
     #cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
 else:
     path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"

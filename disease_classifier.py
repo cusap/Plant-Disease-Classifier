@@ -31,6 +31,7 @@ else:
 
 train_dir = path_to_parent + r"/train"
 val_dir = path_to_parent + r"/val"
+test_dir = path_to_parent + r"/test"
 #learning_rate = .045
 learning_rate = .001
 lr_decay = .98
@@ -146,8 +147,6 @@ def scheduler(epoch):
 
 
 if __name__ == '__main__':
-    #train_im, train_labels, val_im, val_labels, label_names = get_data()
-    #print(len(train_im))
     try:
         with tf.device('/device:GPU:0'):
             #input = tf.keras.Input(shape=data_shape)
@@ -207,17 +206,15 @@ if __name__ == '__main__':
 
             model = tf.keras.Sequential([imported_model,
                                          Flatten(),
-                                         #Dropout(.5),
-                                         Dense(1024,kernel_regularizer=tf.keras.regularizers.l2(lamb),
-            activity_regularizer=tf.keras.regularizers.l2(lamb)),
-                                         #BatchNormalization(),
+                                         Dropout(.5),
+                                         Dense(512, kernel_regularizer=tf.keras.regularizers.l2(lamb),
+                                               activity_regularizer=tf.keras.regularizers.l2(lamb)),
+                                         BatchNormalization(),
                                          ReLU(),
                                          Dropout(.5),
                                          Dense(num_cat, kernel_regularizer=tf.keras.regularizers.l2(lamb),
-            activity_regularizer=tf.keras.regularizers.l2(lamb)),
+                                               activity_regularizer=tf.keras.regularizers.l2(lamb)),
                                          Activation('softmax')])
-
-
             #save model checkpoints
 
             cp_dir = os.path.dirname(cp_path)
@@ -292,6 +289,8 @@ if __name__ == '__main__':
 
 
             model.summary()
+
+
 
             model_log = model.fit_generator(train_generator, epochs=20,
                                             callbacks=[cp_callback],

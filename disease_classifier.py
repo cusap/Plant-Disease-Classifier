@@ -11,6 +11,7 @@ from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
+
 PERCENT_TRAIN = .8
 lamb = 1e-8 #.000001
 winnie = 1
@@ -28,7 +29,8 @@ else:
 
 
 
-
+train_dir = path_to_parent + r"/train"
+val_dir = path_to_parent + r"/val"
 #learning_rate = .045
 learning_rate = .001
 lr_decay = .98
@@ -250,13 +252,12 @@ if __name__ == '__main__':
             no_aug = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
 
             train_generator = im_gen.flow_from_directory(
-                segmented_path,
+                train_dir,
                 shuffle=True,
                 color_mode="rgb",
                 target_size=(224, 224),
                 batch_size=batch_size,
-                class_mode='categorical',
-                subset= "training")
+                class_mode='categorical')
             #
             # val_generator = im_gen.flow_from_directory(
             #     segmented_path,
@@ -270,14 +271,12 @@ if __name__ == '__main__':
 
 
             val_generator = val_gen.flow_from_directory(
-                segmented_path,
+                val_dir,
                 shuffle=True,
                 color_mode="rgb",
                 target_size=(224, 224),
                 batch_size=batch_size,
-                class_mode='categorical',
-                subset="validation"
-                )
+                class_mode='categorical')
             lr_scheduler = LearningRateScheduler(scheduler, verbose=1)
 
             opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9, momentum=.9)

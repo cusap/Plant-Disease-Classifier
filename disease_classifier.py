@@ -29,8 +29,8 @@ else:
 
 
 
-train_dir = path_to_parent + r"/train"
-val_dir = path_to_parent + r"/val"
+train_dir = path_to_parent + r"/Plant-Disease-Classifier/train"
+val_dir = path_to_parent + r"/Plant-Disease-Classifier/val"
 #learning_rate = .045
 learning_rate = .001
 lr_decay = .98

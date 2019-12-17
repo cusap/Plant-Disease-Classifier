@@ -2,7 +2,7 @@ from shutil import copyfile
 import glob
 import random
 path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
-segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
+segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented/*"
 
 
 def splitter():
@@ -11,9 +11,9 @@ def splitter():
     val_count=0
     test_count=0
     for i,label_name in enumerate(glob.glob(segmented_path)):
-        label = label_name.split('\\')[-1]
+        label = label_name.split('/')[-1]
         print(label)
-        for count, pic_name in enumerate(glob.glob(label_name + "\\*")):
+        for count, pic_name in enumerate(glob.glob(label_name + "/*")):
             num = random.randint(1, 10)
 
             if num < 7:

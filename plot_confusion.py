@@ -25,8 +25,8 @@ winnie = 1
 if winnie:
     path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
     segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
-    cp_path = path_to_parent + r"/Plant-Disease-Classifier/conv-big/{epoch:04d}.cpkt"
-    cp_dir = path_to_parent + r"/Plant-Disease-Classifier/conv-big"
+    cp_path = path_to_parent + r"/Plant-Disease-Classifier/to_comp/{epoch:04d}.cpkt"
+    cp_dir = path_to_parent + r"/Plant-Disease-Classifier/the_end"
     #cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
 else:
     path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
@@ -152,18 +152,16 @@ if __name__ == '__main__':
                                                                weights='imagenet')
             imported_model.trainable = False
             # model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
+            global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
+            prediction_layer = tf.keras.layers.Dense(num_cat, activation='softmax')
+
 
             model = tf.keras.Sequential([imported_model,
-                                         Flatten(),
-                                         Dropout(.5),
-                                         Dense(512, kernel_regularizer=tf.keras.regularizers.l2(lamb),
-                                               activity_regularizer=tf.keras.regularizers.l2(lamb)),
-                                         BatchNormalization(),
-                                         ReLU(),
-                                         Dropout(.5),
-                                         Dense(num_cat, kernel_regularizer=tf.keras.regularizers.l2(lamb),
-                                               activity_regularizer=tf.keras.regularizers.l2(lamb)),
-                                         Activation('softmax')])
+                                        global_average_layer,
+                                        tf.keras.layers.Dense(512),
+                                        prediction_layer
+                                         ])
+
             # save model checkpoints
 
             cp_dir = os.path.dirname(cp_path)
@@ -187,23 +185,29 @@ if __name__ == '__main__':
 
             test_generator = test_gen.flow_from_directory(
                 test_dir,
+                batch_size = 32,
                 shuffle=True,
                 color_mode="rgb",
                 target_size=(224, 224),
-                batch_size=batch_size,
                 class_mode='categorical')
 
 
-            test_pred = model.predict_generator(test_generator)
-            print(test_pred.shape)
+            n = 30
+            test_pred = model.predict_generator(test_generator, verbose=1)
             test_pred = np.argmax(test_pred, axis=1)
-            labels = test_generator.classes_indices.keys()
+            conf_mat = confusion_matrix(test_generator.classes, test_pred)
+           
+            labels = list(test_generator.class_indices.keys())
             print(labels)
 
-            df_cm = pd.DataFrame(test_pred, index=labels,
-                                 columns=labels)
-            plt.figure(figsize=(10, 7))
+            df_cm = pd.DataFrame(conf_mat, index=labels,
+                    columns=labels)
+            plt.figure()
             sn.heatmap(df_cm, annot=True)
+            print(conf_mat)
+            plt.ylabel('True label')
+            plt.xlabel('Predicted label')
+            plt.show()
 
     except RuntimeError as e:
         print(e)

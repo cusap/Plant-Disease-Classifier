@@ -16,6 +16,7 @@ from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D,
     DepthwiseConv2D, ReLU, Reshape, MaxPooling2D
 from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
 from sklearn.metrics import classification_report, confusion_matrix, plot_confusion_matrix
+import tensorflow_hub as hub
 
 
 PERCENT_TRAIN = .8
@@ -142,10 +143,67 @@ def scheduler(epoch):
     lr = learning_rate * (lr_decay ** epoch)
     return lr
 
+zip_file=tf.keras.utils.get_file(origin='https://storage.googleapis.com/plantdata/PlantVillage.zip',
+ fname='PlantVillage.zip', extract=True)
+
+data_dir = os.path.join(os.path.dirname(zip_file), 'PlantVillage')
+train_dir = os.path.join(data_dir, 'train')
+validation_dir = os.path.join(data_dir, 'validation')
+
+
+import time
+from os.path import exists
+
+def count(dir, counter=0):
+    for pack in os.walk(dir):
+        for f in pack[2]:
+            counter += 1
+    return dir + " : " + str(counter) + "files"
+
+import json
+
+with open('Plant-Diseases-Detector-master/categories.json', 'r') as f:
+    cat_to_name = json.load(f)
+    classes = list(cat_to_name.values())
+
 
 if __name__ == '__main__':
     try:
         with tf.device('/device:GPU:0'):
+
+            IMAGE_SHAPE = (224, 224)
+
+            BATCH_SIZE = 64  # @param {type:"integer"}
+
+            train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+                rescale=1. / 255,
+                rotation_range=40,
+                horizontal_flip=True,
+                width_shift_range=0.2,
+                height_shift_range=0.2,
+                shear_range=0.2,
+                zoom_range=0.2,
+                fill_mode='nearest')
+
+            train_generator = train_datagen.flow_from_directory(
+                train_dir,
+                subset="training",
+                shuffle=True,
+                seed=42,
+                color_mode="rgb",
+                class_mode="categorical",
+                target_size=IMAGE_SHAPE,
+                batch_size=BATCH_SIZE)
+
+            validation_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
+            validation_generator = validation_datagen.flow_from_directory(
+                validation_dir,
+                shuffle=True,
+                color_mode="rgb",
+                class_mode="categorical",
+                target_size=IMAGE_SHAPE,
+                batch_size=BATCH_SIZE)
+
             # input = tf.keras.Input(shape=data_shape)
             # imported model code
             imported_model = tf.keras.applications.MobileNetV2(input_shape=data_shape, include_top=False,
@@ -155,12 +213,15 @@ if __name__ == '__main__':
             global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
             prediction_layer = tf.keras.layers.Dense(num_cat, activation='softmax')
 
-
-            model = tf.keras.Sequential([imported_model,
-                                        global_average_layer,
-                                        tf.keras.layers.Dense(512),
-                                        prediction_layer
-                                         ])
+            model = tf.keras.Sequential([
+                hub.KerasLayer("https://tfhub.dev/google/tf2-preview/mobilenet_v2/feature_vector/4",
+                               output_shape=[1280],
+                               trainable=False),
+                tf.keras.layers.Dropout(0.4),
+                tf.keras.layers.Dense(512, activation='relu'),
+                tf.keras.layers.Dropout(rate=0.2),
+                tf.keras.layers.Dense(train_generator.num_classes, activation='softmax')
+            ])
 
             # save model checkpoints
 
@@ -181,23 +242,13 @@ if __name__ == '__main__':
 
             model.load_weights(tf.train.latest_checkpoint(cp_dir))
 
-            test_gen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
-
-            test_generator = test_gen.flow_from_directory(
-                test_dir,
-                batch_size = 32,
-                shuffle=True,
-                color_mode="rgb",
-                target_size=(224, 224),
-                class_mode='categorical')
-
 
             n = 30
-            test_pred = model.predict_generator(test_generator, verbose=1)
+            test_pred = model.predict_generator(validation_generator, verbose=1)
             test_pred = np.argmax(test_pred, axis=1)
-            conf_mat = confusion_matrix(test_generator.classes, test_pred)
+            conf_mat = confusion_matrix(validation_generator.classes, test_pred)
            
-            labels = list(test_generator.class_indices.keys())
+            labels = list(validation_generator.class_indices.keys())
             print(labels)
 
             df_cm = pd.DataFrame(conf_mat, index=labels,

@@ -10,7 +10,7 @@ from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D,
 from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-
+import json
 
 PERCENT_TRAIN = .8
 #lamb = 1e-8
@@ -20,7 +20,7 @@ winnie = 1
 if winnie:
     path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
     segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
-    cp_path = path_to_parent + r"/Plant-Disease-Classifier/to_comp/{epoch:04d}.cpkt"
+    cp_path = path_to_parent + r"/Plant-Disease-Classifier/my_imp/{epoch:04d}.cpkt"
     #cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
 else:
     path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
@@ -41,6 +41,10 @@ epochs = 200
 sample_ratio = 16
 data_shape = (224,224,3)
 num_cat = 38
+IMAGE_SHAPE = (224, 224)
+
+BATCH_SIZE = 64 #@param {type:"integer"}
+
 
 def clean_dataset():
 
@@ -146,6 +150,49 @@ def scheduler(epoch):
     lr = learning_rate * (lr_decay ** epoch)
     return lr
 
+def make_gens():
+    zip_file = tf.keras.utils.get_file(origin='https://storage.googleapis.com/plantdata/PlantVillage.zip',
+                                       fname='PlantVillage.zip', extract=True)
+
+    data_dir = os.path.join(os.path.dirname(zip_file), 'PlantVillage')
+    train_dir = os.path.join(data_dir, 'train')
+    validation_dir = os.path.join(data_dir, 'validation')
+
+
+    with open('Plant-Diseases-Detector-master/categories.json', 'r') as f:
+        cat_to_name = json.load(f)
+        classes = list(cat_to_name.values())
+
+    validation_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
+    validation_generator = validation_datagen.flow_from_directory(
+        validation_dir,
+        shuffle=False,
+        seed=42,
+        color_mode="rgb",
+        class_mode="categorical",
+        target_size=IMAGE_SHAPE,
+        batch_size=BATCH_SIZE)
+
+    train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+        rescale=1. / 255,
+        rotation_range=360,
+        horizontal_flip=True,
+        vertical_flip=True,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        brightness_range=[.2, 1.0],
+        shear_range=0.2,
+        zoom_range=0.2,
+        fill_mode='nearest')
+    train_generator = train_datagen.flow_from_directory(
+        train_dir,
+        subset="training",
+        shuffle=True,
+        color_mode="rgb",
+        class_mode="categorical",
+        target_size=IMAGE_SHAPE,
+        batch_size=BATCH_SIZE)
+    return train_generator, validation_generator
 
 if __name__ == '__main__':
     try:
@@ -164,8 +211,7 @@ if __name__ == '__main__':
             model = tf.keras.Model(inputs=input, outputs=output)
             '''
 
-
-            '''
+            input = tf.keras.Input(shape=data_shape)
             # my imp
             x = Conv2D(32, 3,strides= 2,padding='same')(input)
 
@@ -183,106 +229,46 @@ if __name__ == '__main__':
             x = Dropout(.25)(x)
             x = AveragePooling2D(pool_size=(8,8))(x)
             x = Reshape((1,1,1280))(x)
-            x = Conv2D(len(label_names),1, padding='same')(x)
+            x = Conv2D(38,1, padding='same')(x)
             x = Dropout(.25)(x)
 
             x = Activation('softmax')(x)
-            output = Reshape((len(label_names),))(x)
+            output = Reshape((38,))(x)
             #output = Reshape((len(label_names),))(x)
             
             model = tf.keras.Model(inputs=input, outputs=output)
+
+
+
             '''
-
-            
-
             # imported model code
             imported_model = tf.keras.applications.MobileNetV2(input_shape=data_shape, include_top=False,
                                                                weights='imagenet')
             imported_model.trainable = False
             #model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
-            
+
             global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
             prediction_layer = tf.keras.layers.Dense(num_cat, activation='softmax')
 
-        
             model = tf.keras.Sequential([imported_model,
                                         global_average_layer,
                                         tf.keras.layers.Dense(512),
                                         prediction_layer
                                          ])
             '''
-            model = tf.keras.Sequential([Conv2D(32,3,3),
-                                        Conv2D(32,3,3),
-                                        Conv2D(32,3,3),
-                                        Flatten(),
-                                        Dense(num_cat),
-                                        Activation('softmax')])
-            '''
-            #save model checkpoints
 
+            #save model checkpoints
             cp_dir = os.path.dirname(cp_path)
             cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=2,
                                               verbose=1)
 
 
-            im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=360,
-                                                                     width_shift_range=0.2,
-                                                                     height_shift_range=0.2,
-                                                                     horizontal_flip=True,
-                                                                     data_format="channels_last",
-                                                                     shear_range = .2,
-                                                                     fill_mode="nearest",
-                                                                     rescale= 1/.255
-
-                                                                     )
-
-            '''
-            im_gen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=40,
-                                                                     zoom_range=[0.1, .1],
-                                                                     width_shift_range=0.2,
-                                                                     height_shift_range=0.2,
-                                                                     horizontal_flip=True,
-                                                                     vertical_flip=True,
-                                                                     rescale=1./255,
-                                                                     data_format="channels_last",
-                                                                     brightness_range = [.2, 1.0],
-                                                                     )
-            '''
-            val_gen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
-            no_aug = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. / 255)
-
-            train_generator = im_gen.flow_from_directory(
-                train_dir,
-                shuffle=True,
-                color_mode="rgb",
-                target_size=(224, 224),
-                batch_size=batch_size,
-                class_mode='categorical')
-            #
-            # val_generator = im_gen.flow_from_directory(
-            #     segmented_path,
-            #     shuffle=True,
-            #     color_mode="rgb",
-            #     target_size=(224, 224),
-            #     batch_size=batch_size,
-            #     class_mode='categorical',
-            #     subset="validation")
-            #
-
-
-            val_generator = val_gen.flow_from_directory(
-                val_dir,
-                shuffle=True,
-                color_mode="rgb",
-                target_size=(224, 224),
-                batch_size=batch_size,
-                class_mode='categorical')
+            train_generator, val_generator = make_gens()
             lr_scheduler = LearningRateScheduler(scheduler, verbose=1)
-
             opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9, momentum=.9)
 
             model.compile(loss='categorical_crossentropy',
-                          optimizer=tf.keras.optimizers.Adam(lr=learning_rate),
+                          optimizer=opt,
                           metrics=['accuracy'])
             '''
             model_log = model.fit(train_im, train_labels, batch_size=batch_size, epochs=epochs,
@@ -292,14 +278,8 @@ if __name__ == '__main__':
 
 
 
-
-
-<<<<<<< HEAD
-            model_log = model.fit_generator(train_generator, epochs=7,
-=======
-            model_log = model.fit_generator(train_generator, epochs=10,
->>>>>>> 3718ed81638f59187e9468484283ef1122c0e05f
-                                            callbacks=[cp_callback],
+            model_log = model.fit_generator(train_generator, epochs=epochs,
+                                            callbacks=[lr_scheduler, cp_callback],
                                             validation_data=val_generator, verbose=1)
             model.summary()
 

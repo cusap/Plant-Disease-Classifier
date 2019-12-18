@@ -221,7 +221,7 @@ if __name__ == '__main__':
                                output_shape=[1280],
                                trainable=False),
                 tf.keras.layers.Dropout(0.4),
-                tf.keras.layers.Dense(512, activation='relu'),
+                tf.keras.layers.Dense(256, activation='relu'),
                 tf.keras.layers.Dropout(rate=0.2),
                 tf.keras.layers.Dense(train_generator.num_classes, activation='softmax')
             ])
@@ -245,9 +245,9 @@ if __name__ == '__main__':
 
 
             n = 30
-            test_pred = model.evaluate_generator(validation_generator, verbose=1)
+            test_pred = model.predict_generator(validation_generator, verbose=1)
             conf_mat = confusion_matrix(validation_generator.classes, test_pred>.5)
-           
+
             labels = list(validation_generator.class_indices.keys())
             print(labels)
 

@@ -19,7 +19,7 @@ winnie = 1
 if winnie:
     path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
     segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
-    cp_path = path_to_parent + r"/Plant-Disease-Classifier/new-data/{epoch:04d}.cpkt"
+    cp_path = path_to_parent + r"/Plant-Disease-Classifier/to_comp/{epoch:04d}.cpkt"
     #cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
 else:
     path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
@@ -33,7 +33,7 @@ train_dir = path_to_parent + r"/train"
 val_dir = path_to_parent + r"/val"
 test_dir = path_to_parent + r"/test"
 #learning_rate = .045
-learning_rate = .001
+learning_rate = .0001
 lr_decay = .98
 batch_size = 32
 epochs = 200
@@ -149,8 +149,9 @@ def scheduler(epoch):
 if __name__ == '__main__':
     try:
         with tf.device('/device:GPU:0'):
-            #input = tf.keras.Input(shape=data_shape)
             '''
+            input = tf.keras.Input(shape=data_shape)
+            
             #basic
             x = Conv2D(32,3,3)(input)
             x = Conv2D(32,3,3)(x)
@@ -160,7 +161,6 @@ if __name__ == '__main__':
             x = Dense(num_cat)(x)
             output = Activation('softmax')(x)
             model = tf.keras.Model(inputs=input, outputs=output)
-
             '''
 
 
@@ -192,29 +192,31 @@ if __name__ == '__main__':
             model = tf.keras.Model(inputs=input, outputs=output)
             '''
 
-
+            
 
             # imported model code
             imported_model = tf.keras.applications.MobileNetV2(input_shape=data_shape, include_top=False,
                                                                weights='imagenet')
             imported_model.trainable = False
-            '''
-            for layer in imported_model.layers[:90]:
-                layer.trainable = False
-            '''
             #model = tf.keras.Sequential([imported_model,GlobalAveragePooling2D(), Dense(num_cat)])
+            
+            global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
+            prediction_layer = tf.keras.layers.Dense(num_cat, activation='softmax')
 
+        
             model = tf.keras.Sequential([imported_model,
-                                         Flatten(),
-                                         Dropout(.5),
-                                         Dense(512, kernel_regularizer=tf.keras.regularizers.l2(lamb),
-                                               activity_regularizer=tf.keras.regularizers.l2(lamb)),
-                                         BatchNormalization(),
-                                         ReLU(),
-                                         Dropout(.5),
-                                         Dense(num_cat, kernel_regularizer=tf.keras.regularizers.l2(lamb),
-                                               activity_regularizer=tf.keras.regularizers.l2(lamb)),
-                                         Activation('softmax')])
+                                        global_average_layer,
+                                        tf.keras.layers.Dense(512),
+                                        prediction_layer
+                                         ])
+            '''
+            model = tf.keras.Sequential([Conv2D(32,3,3),
+                                        Conv2D(32,3,3),
+                                        Conv2D(32,3,3),
+                                        Flatten(),
+                                        Dense(num_cat),
+                                        Activation('softmax')])
+            '''
             #save model checkpoints
 
             cp_dir = os.path.dirname(cp_path)
@@ -288,13 +290,13 @@ if __name__ == '__main__':
                                   '''
 
 
-            model.summary()
 
 
 
-            model_log = model.fit_generator(train_generator, epochs=20,
+            model_log = model.fit_generator(train_generator, epochs=7,
                                             callbacks=[cp_callback],
                                             validation_data=val_generator, verbose=1)
+            model.summary()
 
 
     except RuntimeError as e:

@@ -143,28 +143,15 @@ def scheduler(epoch):
     lr = learning_rate * (lr_decay ** epoch)
     return lr
 
-zip_file=tf.keras.utils.get_file(origin='https://storage.googleapis.com/plantdata/PlantVillage.zip',
- fname='PlantVillage.zip', extract=True)
-
-data_dir = os.path.join(os.path.dirname(zip_file), 'PlantVillage')
-train_dir = os.path.join(data_dir, 'train')
-validation_dir = os.path.join(data_dir, 'validation')
 
 
 import time
 from os.path import exists
 
-def count(dir, counter=0):
-    for pack in os.walk(dir):
-        for f in pack[2]:
-            counter += 1
-    return dir + " : " + str(counter) + "files"
 
 import json
 
-with open('Plant-Diseases-Detector-master/categories.json', 'r') as f:
-    cat_to_name = json.load(f)
-    classes = list(cat_to_name.values())
+
 
 
 if __name__ == '__main__':
@@ -174,6 +161,22 @@ if __name__ == '__main__':
             IMAGE_SHAPE = (224, 224)
 
             BATCH_SIZE = 64  # @param {type:"integer"}
+
+            zip_file = tf.keras.utils.get_file(origin='https://storage.googleapis.com/plantdata/PlantVillage.zip',
+                                               fname='PlantVillage.zip', extract=True)
+
+            data_dir = os.path.join(os.path.dirname(zip_file), 'PlantVillage')
+            train_dir = os.path.join(data_dir, 'train')
+            validation_dir = os.path.join(data_dir, 'validation')
+
+
+
+
+
+            with open('Plant-Diseases-Detector-master/categories.json', 'r') as f:
+                cat_to_name = json.load(f)
+                classes = list(cat_to_name.values())
+
 
             train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
                 rescale=1. / 255,
@@ -236,8 +239,6 @@ if __name__ == '__main__':
             model.compile(loss='categorical_crossentropy',
                           optimizer=tf.keras.optimizers.Adam(lr=learning_rate),
                           metrics=['accuracy'])
-
-            model.summary()
 
 
             model.load_weights(tf.train.latest_checkpoint(cp_dir))

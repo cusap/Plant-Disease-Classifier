@@ -240,8 +240,8 @@ if __name__ == '__main__':
                           optimizer=tf.keras.optimizers.Adam(lr=learning_rate),
                           metrics=['accuracy'])
 
-
-            model.load_weights(tf.train.latest_checkpoint(cp_dir))
+            recent = tf.train.latest_checkpoint(cp_dir)
+            model.load_weights(recent)
 
 
             n = 30

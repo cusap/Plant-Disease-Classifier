@@ -1,7 +1,4 @@
-
-
 from __future__ import absolute_import, division, print_function, unicode_literals
-
 
 import tensorflow as tf
 #tf.logging.set_verbosity(tf.logging.ERROR)
@@ -21,7 +18,7 @@ winnie = 1
 if winnie:
     path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
     segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
-    cp_path = path_to_parent + r"/Plant-Disease-Classifier/new-data/{epoch:04d}.cpkt"
+    cp_path = path_to_parent + r"/Plant-Disease-Classifier/the_end/{epoch:04d}.cpkt"
     #cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
 else:
     path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
@@ -29,12 +26,8 @@ else:
     cp_path = path_to_parent + r"\Plant-Disease-Classifier\model-checkpoints\{epoch:04d}.cpkt"
 
 
-
-
-
 zip_file=tf.keras.utils.get_file(origin='https://storage.googleapis.com/plantdata/PlantVillage.zip',
  fname='PlantVillage.zip', extract=True)
-
 
 data_dir = os.path.join(os.path.dirname(zip_file), 'PlantVillage')
 train_dir = os.path.join(data_dir, 'train')
@@ -59,10 +52,7 @@ with open('Plant-Diseases-Detector-master/categories.json', 'r') as f:
     cat_to_name = json.load(f)
     classes = list(cat_to_name.values())
 
-print(classes)
-
 IMAGE_SHAPE = (224, 224)
-
 BATCH_SIZE = 64 #@param {type:"integer"}
 # Inputs are suitably resized for the selected module. Dataset augmentation (i.e., random distortions of an image each time it is read) improves training, esp. when fine-tuning.
 
@@ -70,7 +60,6 @@ validation_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1. 
 validation_generator = validation_datagen.flow_from_directory(
     validation_dir,
     shuffle=False,
-    seed=42,
     color_mode="rgb",
     class_mode="categorical",
     target_size=IMAGE_SHAPE,
@@ -80,10 +69,12 @@ do_data_augmentation = True  # @param {type:"boolean"}
 if do_data_augmentation:
     train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
         rescale=1. / 255,
-        rotation_range=40,
+        rotation_range=360,
         horizontal_flip=True,
+        vertical_flip = True,
         width_shift_range=0.2,
         height_shift_range=0.2,
+        brightness_range = [.2, 1.0],
         shear_range=0.2,
         zoom_range=0.2,
         fill_mode='nearest')
@@ -94,7 +85,6 @@ train_generator = train_datagen.flow_from_directory(
     train_dir,
     subset="training",
     shuffle=True,
-    seed=42,
     color_mode="rgb",
     class_mode="categorical",
     target_size=IMAGE_SHAPE,
@@ -105,7 +95,7 @@ model = tf.keras.Sequential([
                  output_shape=[1280],
                  trainable=False),
   tf.keras.layers.Dropout(0.4),
-  tf.keras.layers.Dense(512, activation='relu'),
+  tf.keras.layers.Dense(256, activation='relu'),
   tf.keras.layers.Dropout(rate=0.2),
   tf.keras.layers.Dense(train_generator.num_classes, activation='softmax')
 ])
@@ -123,6 +113,7 @@ model.compile(
    loss='categorical_crossentropy',
    metrics=['accuracy'])
 
+
 EPOCHS=10 #@param {type:"integer"}
 
 history = model.fit_generator(
@@ -131,4 +122,6 @@ history = model.fit_generator(
         epochs=EPOCHS,
         validation_data=validation_generator,
         validation_steps=validation_generator.samples//validation_generator.batch_size,
+        callbacks=[cp_callback],
         verbose= 1)
+model.summary()

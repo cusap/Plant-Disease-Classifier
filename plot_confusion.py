@@ -241,20 +241,19 @@ if __name__ == '__main__':
                           metrics=['accuracy'])
 
             recent = tf.train.latest_checkpoint(cp_dir)
-            model.load_weights(recent)
+            model.load_weights(path_to_parent + r"/Plant-Disease-Classifier/the_end/0008.cpkt")
 
 
             n = 30
-            test_pred = model.predict_generator(validation_generator, verbose=1)
-            test_pred = np.argmax(test_pred, axis=1)
-            conf_mat = confusion_matrix(validation_generator.classes, test_pred)
+            test_pred = model.evaluate_generator(validation_generator, verbose=1)
+            conf_mat = confusion_matrix(validation_generator.classes, test_pred>.5)
            
             labels = list(validation_generator.class_indices.keys())
             print(labels)
 
             df_cm = pd.DataFrame(conf_mat, index=labels,
                     columns=labels)
-            plt.figure()
+            plt.figure(figsize=(38,38))
             sn.heatmap(df_cm, annot=True)
             print(conf_mat)
             plt.ylabel('True label')

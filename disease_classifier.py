@@ -13,7 +13,8 @@ import matplotlib.image as mpimg
 
 
 PERCENT_TRAIN = .8
-lamb = 1e-8 #.000001
+#lamb = 1e-8
+lamb = 0
 winnie = 1
 
 if winnie:
@@ -292,7 +293,7 @@ if __name__ == '__main__':
 
 
 
-            model_log = model.fit_generator(train_generator, epochs=20,
+            model_log = model.fit_generator(train_generator, epochs=10,
                                             callbacks=[cp_callback],
                                             validation_data=val_generator, verbose=1)
 

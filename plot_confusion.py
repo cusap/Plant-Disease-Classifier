@@ -248,7 +248,7 @@ if __name__ == '__main__':
             print(validation_generator.class_indices)
             print(len(validation_generator.classes))
             print("classes: ")
-            print(validation_generator.class_indices)
+            print(validation_generator.classes)
             #sklearn.utils.class_weight.compute_class_weight('balanced', )
 
             n = 30

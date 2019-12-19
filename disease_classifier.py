@@ -9,6 +9,7 @@ from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D,
     DepthwiseConv2D, ReLU, Reshape, MaxPooling2D
 from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
 import matplotlib.pyplot as plt
+import sklearn
 import matplotlib.image as mpimg
 import json
 
@@ -267,6 +268,8 @@ if __name__ == '__main__':
             lr_scheduler = LearningRateScheduler(scheduler, verbose=1)
             opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, rho=.9, momentum=.9)
 
+            class_weights = sklearn.utils.class_weight.compute_class_weight('balanced', np.uniqe(train_generator.classes), train_generator.classes)
+
             model.compile(loss='categorical_crossentropy',
                           optimizer=opt,
                           metrics=['accuracy'])
@@ -280,7 +283,7 @@ if __name__ == '__main__':
 
             model_log = model.fit_generator(train_generator, epochs=epochs,
                                             callbacks=[lr_scheduler, cp_callback],
-                                            validation_data=val_generator, verbose=1)
+                                            validation_data=val_generator, verbose=1, class_weight = class_weights)
             model.summary()
 
 

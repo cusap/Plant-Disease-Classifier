@@ -249,8 +249,8 @@ if __name__ == '__main__':
             print("loss: " + str(loss) + ", accuracy: " +str(acc))
 
             results = model.predict_generator(validation_generator, verbose=1)
-            test_pred = np.array([np.argmax(x) for x in results])
-            conf_mat = confusion_matrix(validation_generator.classes, test_pred>.5)
+            y = np.argmax(results, axis=1)
+            conf_mat = confusion_matrix(validation_generator.classes, y)
 
             labels = list(validation_generator.class_indices.keys())
             print(labels)

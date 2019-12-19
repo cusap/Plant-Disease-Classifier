@@ -15,6 +15,7 @@ from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D,
     AveragePooling2D, BatchNormalization, Add, \
     DepthwiseConv2D, ReLU, Reshape, MaxPooling2D
 from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
+import sklearn
 from sklearn.metrics import classification_report, confusion_matrix, plot_confusion_matrix
 import tensorflow_hub as hub
 
@@ -242,7 +243,13 @@ if __name__ == '__main__':
 
             recent = tf.train.latest_checkpoint(cp_dir)
             model.load_weights(path_to_parent + r"/Plant-Disease-Classifier/the_end/0008.cpkt")
-
+            print(len(validation_generator.class_indices))
+            print("class_indices: ")
+            print(validation_generator.class_indices)
+            print(len(validation_generator.classes))
+            print("classes: ")
+            print(validation_generator.class_indices)
+            #sklearn.utils.class_weight.compute_class_weight('balanced', )
 
             n = 30
             loss,acc = model.evaluate_generator(validation_generator, verbose=1)

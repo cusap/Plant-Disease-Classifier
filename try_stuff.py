@@ -12,13 +12,14 @@ from tensorflow.keras import Model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import layers
-
+import sklearn
+import numpy as np
 winnie = 1
 
 if winnie:
     path_to_parent = r"/home/winnie/dhvanil/cgml/plant-classifier"
     segmented_path = path_to_parent + r"/PlantVillage-Dataset/raw/segmented"
-    cp_path = path_to_parent + r"/Plant-Disease-Classifier/the_end/{epoch:04d}.cpkt"
+    cp_path = path_to_parent + r"/Plant-Disease-Classifier/class_weights/{epoch:04d}.cpkt"
     #cp_path = path_to_parent + r"/Plant-Disease-Classifier/model-checkpoints/{epoch:04d}.cpkt"
 else:
     path_to_parent = r"C:\Users\minht\PycharmProjects\Deep Learning\final_proj"
@@ -108,6 +109,8 @@ cp_dir = os.path.dirname(cp_path)
 cp_callback = ModelCheckpoint(filepath=cp_path, save_weights_only=True, save_best_only=True, period=2,
                                   verbose=1)
 
+class_weights = sklearn.utils.class_weight.compute_class_weight('balanced', np.uniqe(train_generator.classes), train_generator.classes)
+
 model.compile(
    optimizer=tf.keras.optimizers.Adam(lr=LEARNING_RATE),
    loss='categorical_crossentropy',
@@ -123,5 +126,6 @@ history = model.fit_generator(
         validation_data=validation_generator,
         validation_steps=validation_generator.samples//validation_generator.batch_size,
         callbacks=[cp_callback],
+        class_weight = class_weights,
         verbose= 1)
 model.summary()

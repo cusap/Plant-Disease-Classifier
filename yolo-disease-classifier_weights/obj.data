@@ -1,0 +1,6 @@
+classes= 38
+train  = /home/winnie/dhvanil/darknet/train-pv2/train.txt
+valid  = /home/winnie/dhvanil/darknet/train-pv2/test.txt
+names = /home/winnie/dhvanil/darknet/train-pv2/obj.names
+backup = ./backup-pv2
+

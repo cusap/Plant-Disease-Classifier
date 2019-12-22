@@ -1,0 +1,5 @@
+classes= 1
+train  = /home/winnie/dhvanil/darknet/train-yolo/train.txt
+valid  = /home/winnie/dhvanil/darknet/train-yolo/test.txt
+names = /home/winnie/dhvanil/darknet/train-yolo/obj.names
+backup = ./backup-leaves/
